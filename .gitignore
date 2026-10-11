@@ -43,4 +43,5 @@ test-results/
 .eslintcache
 .cache
 .turbo
+*.tsbuildinfo
 scratch/
