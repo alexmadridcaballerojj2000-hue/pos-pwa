@@ -13,21 +13,22 @@ import {
 } from 'lucide-react';
 import { useTheme } from './theme-context';
 import { PwaUpdatePrompt } from './pwa-update-prompt';
+import { t, type TranslationKey } from '@/app/i18n';
 import { cn } from './lib/utils';
 
 interface NavItem {
   to: string;
-  label: string;
+  labelKey: TranslationKey;
   icon: React.ComponentType<{ className?: string }>;
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { to: '/', label: 'Venta', icon: ShoppingCart },
-  { to: '/catalog', label: 'Catálogo', icon: Package },
-  { to: '/shifts', label: 'Turnos', icon: Clock },
-  { to: '/inventory', label: 'Inventario', icon: Boxes },
-  { to: '/reports', label: 'Reportes', icon: BarChart3 },
-  { to: '/settings', label: 'Ajustes', icon: Settings },
+  { to: '/', labelKey: 'nav.pos', icon: ShoppingCart },
+  { to: '/catalog', labelKey: 'nav.catalog', icon: Package },
+  { to: '/shifts', labelKey: 'nav.shifts', icon: Clock },
+  { to: '/inventory', labelKey: 'nav.inventory', icon: Boxes },
+  { to: '/reports', labelKey: 'nav.reports', icon: BarChart3 },
+  { to: '/settings', labelKey: 'nav.settings', icon: Settings },
 ];
 
 export function Layout() {
@@ -55,7 +56,7 @@ export function Layout() {
           <button
             type="button"
             onClick={cycleTheme}
-            aria-label="Cambiar tema"
+            aria-label={t('system.themeToggle')}
             className="flex h-12 w-12 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <ThemeIcon className="h-5 w-5" />
@@ -79,14 +80,14 @@ export function Layout() {
                 }
               >
                 <Icon className="h-5 w-5 flex-shrink-0" />
-                <span>{item.label}</span>
+                <span>{t(item.labelKey)}</span>
               </NavLink>
             );
           })}
         </nav>
 
         <div className="p-4 border-t text-xs text-muted-foreground flex justify-between items-center">
-          <span>Modo: Local</span>
+          <span>{t('system.modeLocal')}</span>
           <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted">v0.1.0</span>
         </div>
       </aside>
@@ -104,7 +105,7 @@ export function Layout() {
           <button
             type="button"
             onClick={cycleTheme}
-            aria-label="Cambiar tema"
+            aria-label={t('system.themeToggle')}
             className="flex h-12 w-12 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
           >
             <ThemeIcon className="h-5 w-5" />
@@ -138,7 +139,7 @@ export function Layout() {
                   }
                 >
                   <Icon className="h-5 w-5 mb-0.5" />
-                  <span>{item.label}</span>
+                  <span>{t(item.labelKey)}</span>
                 </NavLink>
               );
             })}
