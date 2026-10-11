@@ -1,7 +1,11 @@
+import { RouterProvider } from 'react-router-dom';
+import { ThemeProvider } from '@/ui/theme-provider';
+import { router } from './router';
+
 export function App() {
   return (
-    <div className="pos-app">
-      <h1>POS PWA</h1>
-    </div>
+    <ThemeProvider defaultTheme="system" storageKey="pos-pwa-theme">
+      <RouterProvider router={router} />
+    </ThemeProvider>
   );
 }
