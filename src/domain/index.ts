@@ -15,3 +15,4 @@ export * from './clock';
 export * from './ids';
 export * from './money';
 export * from './tax';
+export * from './discount';
