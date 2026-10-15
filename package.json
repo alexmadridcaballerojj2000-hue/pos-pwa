@@ -25,6 +25,7 @@
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.18.4",
     "tailwind-merge": "^3.7.0",
+    "uuid": "^14.0.3",
     "workbox-window": "^7.4.1"
   },
   "devDependencies": {
@@ -38,9 +39,11 @@
     "@types/node": "^22.13.4",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
+    "@types/uuid": "^11.0.0",
     "@typescript-eslint/eslint-plugin": "^8.24.1",
     "@typescript-eslint/parser": "^8.24.1",
     "@vitejs/plugin-react": "^4.3.4",
+    "@vitest/coverage-v8": "^5.0.4",
     "autoprefixer": "^10.6.1",
     "eslint": "^9.20.1",
     "eslint-config-prettier": "^10.0.1",

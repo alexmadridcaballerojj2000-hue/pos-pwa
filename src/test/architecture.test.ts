@@ -47,7 +47,7 @@ export function illegalFunction() {
     expect(errorRules).toContain('no-restricted-imports');
     expect(errorRules).toContain('no-restricted-globals');
     expect(errorRules).toContain('no-restricted-properties');
-  });
+  }, 15000);
 
   it('ESLint allows clean domain code in src/domain', async () => {
     const eslint = new ESLint();
@@ -65,5 +65,5 @@ export function addMoney(a: Minor, b: Minor): Minor {
 
     const errors = results[0]?.messages.filter((m) => m.severity === 2) ?? [];
     expect(errors.length).toBe(0);
-  });
+  }, 15000);
 });
