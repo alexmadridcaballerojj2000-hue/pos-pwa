@@ -18,3 +18,4 @@ export * from './tax';
 export * from './discount';
 export * from './calculator';
 export * from './cart';
+export * from './payments';
