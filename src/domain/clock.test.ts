@@ -19,6 +19,12 @@ describe('FakeClock', () => {
     const clock = new FakeClock('2026-05-15T10:00:00.000Z');
     expect(clock.nowIso()).toBe('2026-05-15T10:00:00.000Z');
     expect(clock.nowEpochMs()).toBe(new Date('2026-05-15T10:00:00.000Z').getTime());
+
+    const fromDate = new FakeClock(new Date('2026-06-01T00:00:00.000Z'));
+    expect(fromDate.nowIso()).toBe('2026-06-01T00:00:00.000Z');
+
+    const fromNumber = new FakeClock(1700000000000);
+    expect(fromNumber.nowEpochMs()).toBe(1700000000000);
   });
 
   it('can advance time forward by milliseconds', () => {

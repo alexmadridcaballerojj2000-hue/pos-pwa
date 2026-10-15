@@ -212,4 +212,111 @@ describe('Cart Reducer & Calculator (SPEC §5.2 & §6.2)', () => {
     expect(cart.lines.length).toBe(0);
     expect(cart.totals.total).toBe(0);
   });
+
+  it('sets line notes, customer, and order notes', () => {
+    let cart = createEmptyCart(true);
+    const lineId = generateId();
+    const customerId = generateId();
+
+    cart = cartReducer(cart, {
+      type: 'ADD_ITEM',
+      payload: {
+        lineId,
+        productId: generateId(),
+        sku: 'BURGER',
+        name: 'Hamburguesa',
+        unitPrice: 8000,
+        qty: 1000,
+        taxRateId: taxRate15Id,
+        taxRateBp: 1500,
+      },
+    });
+
+    cart = cartReducer(cart, {
+      type: 'SET_LINE_NOTE',
+      payload: { lineId, note: 'Sin cebolla' },
+    });
+    expect(cart.lines[0]?.note).toBe('Sin cebolla');
+
+    cart = cartReducer(cart, {
+      type: 'SET_CUSTOMER',
+      payload: customerId,
+    });
+    expect(cart.customerId).toBe(customerId);
+
+    cart = cartReducer(cart, {
+      type: 'SET_NOTES',
+      payload: 'Mesa 4',
+    });
+    expect(cart.notes).toBe('Mesa 4');
+  });
+
+  it('switches pricesIncludeTax mode dynamically', () => {
+    let cart = createEmptyCart(true);
+    cart = cartReducer(cart, {
+      type: 'ADD_ITEM',
+      payload: {
+        lineId: generateId(),
+        productId: generateId(),
+        sku: 'SHIRT',
+        name: 'Camisa',
+        unitPrice: 10000,
+        qty: 1000,
+        taxRateId: taxRate15Id,
+        taxRateBp: 1500,
+      },
+    });
+
+    // In included tax: total is 10000
+    expect(cart.totals.total).toBe(10000);
+
+    // Switch to excluded tax: total is 11500
+    cart = cartReducer(cart, {
+      type: 'SET_PRICES_INCLUDE_TAX',
+      payload: false,
+    });
+    expect(cart.totals.total).toBe(11500);
+    expect(cart.totals.tax).toBe(1500);
+  });
+
+  it('sets and removes line discounts', () => {
+    let cart = createEmptyCart(true);
+    const lineId = generateId();
+
+    cart = cartReducer(cart, {
+      type: 'ADD_ITEM',
+      payload: {
+        lineId,
+        productId: generateId(),
+        sku: 'JACKET',
+        name: 'Chaqueta',
+        unitPrice: 10000,
+        qty: 1000,
+        taxRateId: taxRate15Id,
+        taxRateBp: 0,
+      },
+    });
+
+    cart = cartReducer(cart, {
+      type: 'SET_LINE_DISCOUNT',
+      payload: { lineId, discount: { type: 'fixed', value: 2000 } },
+    });
+    expect(cart.totals.lineDiscounts).toBe(2000);
+    expect(cart.totals.total).toBe(8000);
+
+    // Clear line discount
+    cart = cartReducer(cart, {
+      type: 'SET_LINE_DISCOUNT',
+      payload: { lineId, discount: undefined },
+    });
+    expect(cart.totals.lineDiscounts).toBe(0);
+    expect(cart.totals.total).toBe(10000);
+  });
+
+  it('returns unchanged state for unrecognized action', () => {
+    const cart = createEmptyCart(true);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const next = cartReducer(cart, { type: 'UNKNOWN' } as any);
+    expect(next).toBe(cart);
+  });
 });
