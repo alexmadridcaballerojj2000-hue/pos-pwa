@@ -45,4 +45,6 @@ export function useTranslation() {
   return { t };
 }
 
+export const useI18n = useTranslation;
+
 export { es };
