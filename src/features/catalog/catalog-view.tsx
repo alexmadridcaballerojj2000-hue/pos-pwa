@@ -7,6 +7,7 @@ import { ProductDialog } from './product-dialog';
 import { CategoryManager } from './category-manager';
 import { TaxRateManager } from './tax-manager';
 import { CsvImportDialog } from './csv-import-dialog';
+import { productSearchIndex } from './search-index';
 import { useI18n } from '@/app/i18n';
 
 type CatalogTab = 'products' | 'categories' | 'taxes' | 'import';
@@ -28,18 +29,21 @@ export const CatalogView: React.FC = () => {
 
   const loadData = useCallback(
     async (isMountedRef?: () => boolean) => {
-      const [prods, cats, taxes] = await Promise.all([
-        repositories.products.list({
-          search: searchQuery,
-          categoryId: selectedCategoryId,
-          activeOnly,
-        }),
+      const [allProds, cats, taxes] = await Promise.all([
+        repositories.products.list(),
         repositories.categories.list(),
         repositories.taxRates.listAll(),
       ]);
 
+      productSearchIndex.indexAll(allProds);
+
+      const filtered = productSearchIndex.search(searchQuery, {
+        categoryId: selectedCategoryId,
+        activeOnly,
+      });
+
       if (!isMountedRef || isMountedRef()) {
-        setProducts(prods);
+        setProducts(filtered);
         setCategories(cats);
         setTaxRates(taxes);
       }
@@ -57,6 +61,7 @@ export const CatalogView: React.FC = () => {
 
   const handleSaveProduct = async (product: Product) => {
     await repositories.products.save(product);
+    productSearchIndex.addOrUpdate(product);
     await loadData();
   };
 
