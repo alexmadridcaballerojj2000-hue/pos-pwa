@@ -6,6 +6,7 @@ import { ShiftsView } from '@/features/shifts/shifts-view';
 import { InventoryView } from '@/features/inventory/inventory-view';
 import { ReportsView } from '@/features/reports/reports-view';
 import { SettingsView } from '@/features/settings/settings-view';
+import { DiagnosticsView } from '@/features/diagnostics/diagnostics-view';
 
 export const router = createBrowserRouter([
   {
@@ -35,6 +36,10 @@ export const router = createBrowserRouter([
       {
         path: 'settings',
         element: <SettingsView />,
+      },
+      {
+        path: 'diagnostics',
+        element: <DiagnosticsView />,
       },
     ],
   },
