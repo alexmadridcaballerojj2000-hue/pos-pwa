@@ -90,9 +90,9 @@ describe('withTx (Atomic Business Transactions)', () => {
     // 2. Inventory movement created (-2000 milli)
     const movements = await db.inventoryMovements.where('productId').equals(productId).toArray();
     expect(movements).toHaveLength(1);
-    expect(movements[0].qty).toBe(-2000);
-    expect(movements[0].type).toBe('sale');
-    expect(movements[0].refId).toBe(sale.id);
+    expect(movements[0]?.qty).toBe(-2000);
+    expect(movements[0]?.type).toBe('sale');
+    expect(movements[0]?.refId).toBe(sale.id);
 
     // 3. StockLevel updated from 10000 to 8000
     const stock = await db.stockLevels.get(productId);
@@ -101,15 +101,15 @@ describe('withTx (Atomic Business Transactions)', () => {
     // 4. Outbox item created
     const outboxItems = await db.outbox.toArray();
     expect(outboxItems).toHaveLength(1);
-    expect(outboxItems[0].entity).toBe('sale');
-    expect(outboxItems[0].entityId).toBe(sale.id);
-    expect(outboxItems[0].status).toBe('pending');
+    expect(outboxItems[0]?.entity).toBe('sale');
+    expect(outboxItems[0]?.entityId).toBe(sale.id);
+    expect(outboxItems[0]?.status).toBe('pending');
 
     // 5. Audit entry created
     const auditEntries = await db.auditLog.toArray();
     expect(auditEntries).toHaveLength(1);
-    expect(auditEntries[0].action).toBe('sale:create');
-    expect(auditEntries[0].entityId).toBe(sale.id);
+    expect(auditEntries[0]?.action).toBe('sale:create');
+    expect(auditEntries[0]?.entityId).toBe(sale.id);
   });
 
   it('GUARANTEES ATOMICITY: rolls back completely if an error is thrown during transaction', async () => {

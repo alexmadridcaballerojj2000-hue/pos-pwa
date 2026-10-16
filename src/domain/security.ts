@@ -46,7 +46,7 @@ export async function hashPin(
   const derivedBits = await crypto.subtle.deriveBits(
     {
       name: 'PBKDF2',
-      salt: salt as ArrayBufferView,
+      salt: salt as unknown as BufferSource,
       iterations,
       hash: 'SHA-256',
     },

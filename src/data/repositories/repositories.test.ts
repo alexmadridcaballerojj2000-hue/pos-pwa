@@ -53,7 +53,7 @@ describe('Dexie Repositories (domain port implementations)', () => {
 
       const activeList = await repos.users.listActive();
       expect(activeList).toHaveLength(1);
-      expect(activeList[0].id).toBe(activeUser.id);
+      expect(activeList[0]?.id).toBe(activeUser.id);
 
       // Update user
       const updatedUser: User = { ...activeUser, name: 'Alice Manager', role: 'manager' };
@@ -134,7 +134,7 @@ describe('Dexie Repositories (domain port implementations)', () => {
 
       const activeOnly = await repos.products.listActive();
       expect(activeOnly).toHaveLength(1);
-      expect(activeOnly[0].id).toBe(product1.id);
+      expect(activeOnly[0]?.id).toBe(product1.id);
     });
   });
 
@@ -175,8 +175,8 @@ describe('Dexie Repositories (domain port implementations)', () => {
 
       const list = await repos.categories.list();
       expect(list).toHaveLength(2);
-      expect(list[0].name).toBe('Abarrotes'); // sort 1 before 2
-      expect(list[1].name).toBe('Bebidas');
+      expect(list[0]?.name).toBe('Abarrotes'); // sort 1 before 2
+      expect(list[1]?.name).toBe('Bebidas');
     });
   });
 
@@ -224,7 +224,7 @@ describe('Dexie Repositories (domain port implementations)', () => {
 
       const shiftSales = await repos.sales.listByShift(shiftId);
       expect(shiftSales).toHaveLength(1);
-      expect(shiftSales[0].id).toBe(sale.id);
+      expect(shiftSales[0]?.id).toBe(sale.id);
     });
   });
 
@@ -284,7 +284,7 @@ describe('Dexie Repositories (domain port implementations)', () => {
 
       const pendingList = await repos.outbox.listPending();
       expect(pendingList).toHaveLength(1);
-      expect(pendingList[0].eventId).toBe(item.eventId);
+      expect(pendingList[0]?.eventId).toBe(item.eventId);
 
       await repos.outbox.markStatus(seq, 'synced');
       expect(await repos.outbox.countByStatus('pending')).toBe(0);
@@ -314,8 +314,8 @@ describe('Dexie Repositories (domain port implementations)', () => {
 
       const recent = await repos.audit.listRecent();
       expect(recent).toHaveLength(2);
-      expect(recent[0].id).toBe(entry2.id); // newer first
-      expect(recent[1].id).toBe(entry1.id);
+      expect(recent[0]?.id).toBe(entry2.id); // newer first
+      expect(recent[1]?.id).toBe(entry1.id);
     });
 
     it('stores and retrieves arbitrary typed values in meta', async () => {

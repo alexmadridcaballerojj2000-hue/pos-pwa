@@ -1,4 +1,10 @@
 import type { Bp, ISODate, Milli, Minor, UUID } from './index';
+import type { SaleLine, SaleTotals } from './calculator';
+import type { Payment, PaymentMethodConfig } from './payments';
+import type { Discount } from './discount';
+
+export type { UUID };
+export type SaleOrderDiscount = Discount;
 
 export interface Versioned {
   id: UUID;
@@ -61,16 +67,6 @@ export interface User extends Versioned {
   pin: UserPin;
 }
 
-export type PaymentMethodKind = 'cash' | 'card' | 'transfer' | 'other';
-
-export interface PaymentMethodConfig {
-  id: string;
-  label: string;
-  kind: PaymentMethodKind;
-  active: boolean;
-  requireReference: boolean;
-}
-
 export interface Settings {
   id: 'singleton';
   business: {
@@ -108,66 +104,6 @@ export interface CustomFieldDef extends Versioned {
   showOn: ('form' | 'pos' | 'receipt')[];
 }
 
-export interface SaleLineDiscount {
-  type: 'percent' | 'fixed';
-  value: number;
-  reason?: string;
-  approvedBy?: UUID;
-}
-
-export interface SaleLine {
-  lineId: UUID;
-  productId: UUID;
-  sku: string;
-  name: string;
-  qty: Milli;
-  unitPrice: Minor;
-  discount?: SaleLineDiscount;
-  taxRateId: UUID;
-  taxRateBp: Bp;
-  lineBase: Minor;
-  lineDiscount: Minor;
-  orderDiscountShare: Minor;
-  taxableBase: Minor;
-  tax: Minor;
-  lineTotal: Minor;
-  note?: string;
-  custom: Record<string, unknown>;
-}
-
-export interface SalePayment {
-  id: UUID;
-  method: string;
-  amount: Minor;
-  tendered?: Minor;
-  reference?: string;
-  createdAt: ISODate;
-}
-
-export interface TaxBreakdownItem {
-  taxRateId: UUID;
-  rateBp: Bp;
-  base: Minor;
-  tax: Minor;
-}
-
-export interface SaleTotals {
-  subtotal: Minor;
-  lineDiscounts: Minor;
-  orderDiscount: Minor;
-  tax: Minor;
-  roundingAdjustment: Minor;
-  total: Minor;
-  taxBreakdown: TaxBreakdownItem[];
-}
-
-export interface SaleOrderDiscount {
-  type: 'percent' | 'fixed';
-  value: number;
-  reason?: string;
-  approvedBy?: UUID;
-}
-
 export interface Sale {
   id: UUID;
   number: string;
@@ -179,7 +115,7 @@ export interface Sale {
   lines: SaleLine[];
   orderDiscount?: SaleOrderDiscount;
   totals: SaleTotals;
-  payments: SalePayment[];
+  payments: Payment[];
   change: Minor;
   pricesIncludeTax: boolean;
   currency: string;
@@ -213,7 +149,7 @@ export interface SaleReturn {
     qty: Milli;
     refund: Minor;
   }[];
-  refunds: SalePayment[];
+  refunds: Payment[];
   reason: string;
   approvedBy?: UUID;
   createdBy: UUID;

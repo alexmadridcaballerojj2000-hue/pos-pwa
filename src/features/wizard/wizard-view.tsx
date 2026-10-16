@@ -13,12 +13,12 @@ const wizardSchema = z
     address: z.string().optional(),
     phone: z.string().optional(),
     receiptFooter: z.string().optional(),
-    currencyCode: z.string().min(2).max(4).default('USD'),
-    currencySymbol: z.string().min(1).default('$'),
-    decimals: z.coerce.number().min(0).max(4).default(2),
-    pricesIncludeTax: z.boolean().default(true),
-    taxName: z.string().min(1, 'El nombre del impuesto es requerido').default('IVA 16%'),
-    taxPercent: z.coerce.number().min(0).max(100).default(16),
+    currencyCode: z.string().min(2).max(4),
+    currencySymbol: z.string().min(1),
+    decimals: z.number().min(0).max(4),
+    pricesIncludeTax: z.boolean(),
+    taxName: z.string().min(1, 'El nombre del impuesto es requerido'),
+    taxPercent: z.number().min(0).max(100),
     ownerName: z.string().min(1, 'El nombre del dueño es requerido'),
     ownerPin: z.string().regex(/^\d{4,6}$/, 'El PIN debe tener entre 4 y 6 dígitos'),
     ownerPinConfirm: z.string().regex(/^\d{4,6}$/, 'Confirmación requerida'),
@@ -271,7 +271,7 @@ export const WizardView: React.FC<WizardViewProps> = ({ onComplete }) => {
                     {t('wizard.decimals')}
                   </label>
                   <select
-                    {...register('decimals')}
+                    {...register('decimals', { valueAsNumber: true })}
                     className="w-full h-12 px-4 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-base"
                   >
                     <option value={2}>2 (Ej. 10.50)</option>
@@ -322,7 +322,7 @@ export const WizardView: React.FC<WizardViewProps> = ({ onComplete }) => {
                   <input
                     type="number"
                     step="0.01"
-                    {...register('taxPercent')}
+                    {...register('taxPercent', { valueAsNumber: true })}
                     placeholder="16"
                     className="w-full h-12 px-4 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-base"
                   />

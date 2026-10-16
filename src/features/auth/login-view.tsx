@@ -30,7 +30,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, db = defau
       .then((activeUsers) => {
         if (isMounted) {
           setUsers(activeUsers);
-          if (activeUsers.length === 1) {
+          if (activeUsers.length === 1 && activeUsers[0]) {
             setSelectedUser(activeUsers[0]);
           }
         }
