@@ -24,12 +24,20 @@ export interface SettingsRepository {
   save(settings: Settings): Promise<void>;
 }
 
+export interface ProductFilter {
+  activeOnly?: boolean;
+  categoryId?: UUID | null;
+  search?: string;
+}
+
 export interface ProductRepository {
   getById(id: UUID): Promise<Product | null>;
   getByBarcode(barcode: string): Promise<Product | null>;
   getBySku(sku: string): Promise<Product | null>;
+  list(filter?: ProductFilter): Promise<Product[]>;
   listActive(): Promise<Product[]>;
   save(product: Product): Promise<void>;
+  delete(id: UUID): Promise<void>;
 }
 
 export interface TaxRateRepository {

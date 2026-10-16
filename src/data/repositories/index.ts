@@ -75,12 +75,42 @@ export class DexieProductRepository implements ProductRepository {
     return product ?? null;
   }
 
+  async list(filter?: import('@/domain').ProductFilter): Promise<Product[]> {
+    let collection = this.db.products.toCollection();
+
+    if (filter?.categoryId) {
+      collection = this.db.products.where('categoryId').equals(filter.categoryId);
+    }
+
+    let products = await collection.toArray();
+
+    if (filter?.activeOnly) {
+      products = products.filter((p) => p.active);
+    }
+
+    if (filter?.search) {
+      const q = filter.search.toLowerCase().trim();
+      products = products.filter(
+        (p) =>
+          p.name.toLowerCase().includes(q) ||
+          p.sku.toLowerCase().includes(q) ||
+          p.barcodes.some((b) => b.includes(q)),
+      );
+    }
+
+    return products;
+  }
+
   async listActive(): Promise<Product[]> {
     return this.db.products.filter((p) => p.active).toArray();
   }
 
   async save(product: Product): Promise<void> {
     await this.db.products.put(product);
+  }
+
+  async delete(id: UUID): Promise<void> {
+    await this.db.products.delete(id);
   }
 }
 

@@ -6,17 +6,23 @@ export interface CurrencyConfig {
   symbol?: string;
 }
 
+export const DEFAULT_CURRENCY: CurrencyConfig = {
+  code: 'USD',
+  decimals: 2,
+  symbol: '$',
+};
+
 /**
  * Format minor unit integer (e.g. cents) to localized currency string.
  * Uses Intl.NumberFormat according to SPEC §10.
  *
  * @param amountMinor - Integer in minor units (e.g. 1050 for 10.50)
- * @param currency - Currency configuration from Settings
+ * @param currency - Currency configuration from Settings (defaults to USD)
  * @param locale - BCP 47 locale (defaults to 'es-ES')
  */
 export function formatMoney(
   amountMinor: Minor,
-  currency: CurrencyConfig,
+  currency: CurrencyConfig = DEFAULT_CURRENCY,
   locale = 'es-ES',
 ): string {
   const divisor = Math.pow(10, currency.decimals);
