@@ -6,6 +6,7 @@ import { ProductList } from './product-list';
 import { ProductDialog } from './product-dialog';
 import { CategoryManager } from './category-manager';
 import { TaxRateManager } from './tax-manager';
+import { CsvImportDialog } from './csv-import-dialog';
 import { useI18n } from '@/app/i18n';
 
 type CatalogTab = 'products' | 'categories' | 'taxes' | 'import';
@@ -190,12 +191,7 @@ export const CatalogView: React.FC = () => {
       )}
 
       {activeTab === 'import' && (
-        <div
-          id="import-tab-content"
-          className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-500"
-        >
-          Asistente de importación CSV.
-        </div>
+        <CsvImportDialog categories={categories} taxRates={taxRates} onImportComplete={loadData} />
       )}
 
       {/* Create / Edit Dialog */}
