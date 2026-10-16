@@ -39,6 +39,9 @@ playwright-report/
 test-results/
 .nyc_output/
 
+# Generated seed data
+data/*.csv
+
 # Temporary storage & cache
 .eslintcache
 .cache
