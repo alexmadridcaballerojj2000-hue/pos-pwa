@@ -6,9 +6,17 @@ import type { UUID } from './index';
  * UUIDv7 embeds a Unix millisecond timestamp, providing natural temporal ordering
  * and optimal indexing performance for database keys.
  */
-export function generateId(): UUID {
+export function generateId(dateOrMs?: Date | number): UUID {
+  if (typeof dateOrMs === 'number') {
+    return uuidv7({ msecs: dateOrMs });
+  }
+  if (dateOrMs instanceof Date) {
+    return uuidv7({ msecs: dateOrMs.getTime() });
+  }
   return uuidv7();
 }
+
+export const v7 = generateId;
 
 /**
  * Validate whether a string is a well-formed UUID (any version).
