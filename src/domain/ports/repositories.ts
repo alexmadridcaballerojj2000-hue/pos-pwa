@@ -1,6 +1,7 @@
 import type {
   AuditEntry,
   Category,
+  CustomFieldDef,
   OutboxItem,
   OutboxStatus,
   Product,
@@ -52,6 +53,14 @@ export interface CategoryRepository {
   getById(id: UUID): Promise<Category | null>;
   list(): Promise<Category[]>;
   save(category: Category): Promise<void>;
+  delete(id: UUID): Promise<void>;
+}
+
+export interface CustomFieldDefRepository {
+  getById(id: UUID): Promise<CustomFieldDef | null>;
+  listByEntity(entity: 'product' | 'customer' | 'sale'): Promise<CustomFieldDef[]>;
+  listAll(): Promise<CustomFieldDef[]>;
+  save(def: CustomFieldDef): Promise<void>;
   delete(id: UUID): Promise<void>;
 }
 

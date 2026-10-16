@@ -12,6 +12,7 @@ import {
   type TaxRate,
 } from '@/domain';
 import { useI18n } from '@/app/i18n';
+import { DynamicCustomFields } from '@/ui/dynamic-custom-fields';
 
 const productSchema = z.object({
   sku: z.string().min(1, 'El SKU es requerido'),
@@ -453,29 +454,11 @@ export const ProductDialog: React.FC<ProductDialogProps> = ({
               <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
                 Campos Personalizados
               </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {customFieldDefs
-                  .filter((d) => d.entity === 'product')
-                  .map((field) => (
-                    <div key={field.id}>
-                      <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                        {field.label} {field.required ? '*' : ''}
-                      </label>
-                      <input
-                        type={field.type === 'number' ? 'number' : 'text'}
-                        value={String(customValues[field.key] ?? '')}
-                        onChange={(e) =>
-                          setCustomValues((prev) => ({
-                            ...prev,
-                            [field.key]:
-                              field.type === 'number' ? Number(e.target.value) : e.target.value,
-                          }))
-                        }
-                        className="w-full h-10 px-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs"
-                      />
-                    </div>
-                  ))}
-              </div>
+              <DynamicCustomFields
+                defs={customFieldDefs.filter((d) => d.entity === 'product')}
+                values={customValues}
+                onChange={setCustomValues}
+              />
             </div>
           )}
 

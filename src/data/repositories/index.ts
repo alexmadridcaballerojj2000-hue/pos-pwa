@@ -3,6 +3,8 @@ import type {
   AuditRepository,
   Category,
   CategoryRepository,
+  CustomFieldDef,
+  CustomFieldDefRepository,
   MetaRepository,
   OutboxItem,
   OutboxRepository,
@@ -160,6 +162,31 @@ export class DexieCategoryRepository implements CategoryRepository {
   }
 }
 
+export class DexieCustomFieldDefRepository implements CustomFieldDefRepository {
+  constructor(private readonly db: AppDatabase = defaultDb) {}
+
+  async getById(id: UUID): Promise<CustomFieldDef | null> {
+    const def = await this.db.customFieldDefs.get(id);
+    return def ?? null;
+  }
+
+  async listByEntity(entity: 'product' | 'customer' | 'sale'): Promise<CustomFieldDef[]> {
+    return this.db.customFieldDefs.where('entity').equals(entity).toArray();
+  }
+
+  async listAll(): Promise<CustomFieldDef[]> {
+    return this.db.customFieldDefs.toArray();
+  }
+
+  async save(def: CustomFieldDef): Promise<void> {
+    await this.db.customFieldDefs.put(def);
+  }
+
+  async delete(id: UUID): Promise<void> {
+    await this.db.customFieldDefs.delete(id);
+  }
+}
+
 export class DexieSaleRepository implements SaleRepository {
   constructor(private readonly db: AppDatabase = defaultDb) {}
 
@@ -259,6 +286,7 @@ export interface Repositories {
   products: ProductRepository;
   taxRates: TaxRateRepository;
   categories: CategoryRepository;
+  customFieldDefs: CustomFieldDefRepository;
   sales: SaleRepository;
   shifts: ShiftRepository;
   outbox: OutboxRepository;
@@ -273,6 +301,7 @@ export function createRepositories(db: AppDatabase = defaultDb): Repositories {
     products: new DexieProductRepository(db),
     taxRates: new DexieTaxRateRepository(db),
     categories: new DexieCategoryRepository(db),
+    customFieldDefs: new DexieCustomFieldDefRepository(db),
     sales: new DexieSaleRepository(db),
     shifts: new DexieShiftRepository(db),
     outbox: new DexieOutboxRepository(db),
