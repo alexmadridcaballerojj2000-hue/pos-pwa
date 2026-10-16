@@ -21,3 +21,5 @@ export * from './calculator';
 export * from './cart';
 export * from './payments';
 export * from './types';
+export * from './security';
+export * from './permissions';
