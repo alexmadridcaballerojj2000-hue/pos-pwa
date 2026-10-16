@@ -19,3 +19,4 @@ export * from './discount';
 export * from './calculator';
 export * from './cart';
 export * from './payments';
+export * from './types';
