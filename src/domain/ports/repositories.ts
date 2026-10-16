@@ -2,6 +2,7 @@ import type {
   AuditEntry,
   Category,
   CustomFieldDef,
+  Customer,
   OutboxItem,
   OutboxStatus,
   Product,
@@ -38,6 +39,14 @@ export interface ProductRepository {
   list(filter?: ProductFilter): Promise<Product[]>;
   listActive(): Promise<Product[]>;
   save(product: Product): Promise<void>;
+  delete(id: UUID): Promise<void>;
+}
+
+export interface CustomerRepository {
+  getById(id: UUID): Promise<Customer | null>;
+  search(query: string): Promise<Customer[]>;
+  list(limit?: number): Promise<Customer[]>;
+  save(customer: Customer): Promise<void>;
   delete(id: UUID): Promise<void>;
 }
 

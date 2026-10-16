@@ -5,6 +5,8 @@ import type {
   CategoryRepository,
   CustomFieldDef,
   CustomFieldDefRepository,
+  Customer,
+  CustomerRepository,
   MetaRepository,
   OutboxItem,
   OutboxRepository,
@@ -187,6 +189,44 @@ export class DexieCustomFieldDefRepository implements CustomFieldDefRepository {
   }
 }
 
+export class DexieCustomerRepository implements CustomerRepository {
+  constructor(private readonly db: AppDatabase = defaultDb) {}
+
+  async getById(id: UUID): Promise<Customer | null> {
+    const customer = await this.db.customers.get(id);
+    return customer ?? null;
+  }
+
+  async search(query: string): Promise<Customer[]> {
+    const q = query.toLowerCase().trim();
+    if (!q) {
+      return this.list(50);
+    }
+    return this.db.customers
+      .filter(
+        (c) =>
+          c.name.toLowerCase().includes(q) ||
+          Boolean(c.phone && c.phone.includes(q)) ||
+          Boolean(c.taxId && c.taxId.toLowerCase().includes(q)) ||
+          Boolean(c.email && c.email.toLowerCase().includes(q)),
+      )
+      .limit(50)
+      .toArray();
+  }
+
+  async list(limit = 100): Promise<Customer[]> {
+    return this.db.customers.orderBy('name').limit(limit).toArray();
+  }
+
+  async save(customer: Customer): Promise<void> {
+    await this.db.customers.put(customer);
+  }
+
+  async delete(id: UUID): Promise<void> {
+    await this.db.customers.delete(id);
+  }
+}
+
 export class DexieSaleRepository implements SaleRepository {
   constructor(private readonly db: AppDatabase = defaultDb) {}
 
@@ -284,6 +324,7 @@ export interface Repositories {
   users: UserRepository;
   settings: SettingsRepository;
   products: ProductRepository;
+  customers: CustomerRepository;
   taxRates: TaxRateRepository;
   categories: CategoryRepository;
   customFieldDefs: CustomFieldDefRepository;
@@ -299,6 +340,7 @@ export function createRepositories(db: AppDatabase = defaultDb): Repositories {
     users: new DexieUserRepository(db),
     settings: new DexieSettingsRepository(db),
     products: new DexieProductRepository(db),
+    customers: new DexieCustomerRepository(db),
     taxRates: new DexieTaxRateRepository(db),
     categories: new DexieCategoryRepository(db),
     customFieldDefs: new DexieCustomFieldDefRepository(db),
