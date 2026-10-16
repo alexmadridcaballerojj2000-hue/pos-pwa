@@ -4,6 +4,8 @@ import type { Category, Product, TaxRate } from '@/domain';
 import { repositories } from '@/data/repositories';
 import { ProductList } from './product-list';
 import { ProductDialog } from './product-dialog';
+import { CategoryManager } from './category-manager';
+import { TaxRateManager } from './tax-manager';
 import { useI18n } from '@/app/i18n';
 
 type CatalogTab = 'products' | 'categories' | 'taxes' | 'import';
@@ -32,7 +34,7 @@ export const CatalogView: React.FC = () => {
           activeOnly,
         }),
         repositories.categories.list(),
-        repositories.taxRates.listActive(),
+        repositories.taxRates.listAll(),
       ]);
 
       if (!isMountedRef || isMountedRef()) {
@@ -65,6 +67,26 @@ export const CatalogView: React.FC = () => {
   const handleEditProduct = (product: Product) => {
     setEditingProduct(product);
     setIsDialogOpen(true);
+  };
+
+  const handleSaveCategory = async (category: Category) => {
+    await repositories.categories.save(category);
+    await loadData();
+  };
+
+  const handleDeleteCategory = async (id: string) => {
+    await repositories.categories.delete(id);
+    await loadData();
+  };
+
+  const handleSaveTaxRate = async (taxRate: TaxRate) => {
+    await repositories.taxRates.save(taxRate);
+    await loadData();
+  };
+
+  const handleDeleteTaxRate = async (id: string) => {
+    await repositories.taxRates.delete(id);
+    await loadData();
   };
 
   return (
@@ -152,21 +174,19 @@ export const CatalogView: React.FC = () => {
       )}
 
       {activeTab === 'categories' && (
-        <div
-          id="category-tab-content"
-          className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-500"
-        >
-          Panel de gestión de categorías jerárquicas.
-        </div>
+        <CategoryManager
+          categories={categories}
+          onSave={handleSaveCategory}
+          onDelete={handleDeleteCategory}
+        />
       )}
 
       {activeTab === 'taxes' && (
-        <div
-          id="taxes-tab-content"
-          className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-500"
-        >
-          Panel de gestión de tasas impositivas.
-        </div>
+        <TaxRateManager
+          taxRates={taxRates}
+          onSave={handleSaveTaxRate}
+          onDelete={handleDeleteTaxRate}
+        />
       )}
 
       {activeTab === 'import' && (

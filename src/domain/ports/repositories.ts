@@ -43,13 +43,16 @@ export interface ProductRepository {
 export interface TaxRateRepository {
   getById(id: UUID): Promise<TaxRate | null>;
   listActive(): Promise<TaxRate[]>;
+  listAll(): Promise<TaxRate[]>;
   save(taxRate: TaxRate): Promise<void>;
+  delete(id: UUID): Promise<void>;
 }
 
 export interface CategoryRepository {
   getById(id: UUID): Promise<Category | null>;
   list(): Promise<Category[]>;
   save(category: Category): Promise<void>;
+  delete(id: UUID): Promise<void>;
 }
 
 export interface SaleRepository {

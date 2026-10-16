@@ -126,8 +126,16 @@ export class DexieTaxRateRepository implements TaxRateRepository {
     return this.db.taxRates.filter((t) => t.active).toArray();
   }
 
+  async listAll(): Promise<TaxRate[]> {
+    return this.db.taxRates.toArray();
+  }
+
   async save(taxRate: TaxRate): Promise<void> {
     await this.db.taxRates.put(taxRate);
+  }
+
+  async delete(id: UUID): Promise<void> {
+    await this.db.taxRates.delete(id);
   }
 }
 
@@ -145,6 +153,10 @@ export class DexieCategoryRepository implements CategoryRepository {
 
   async save(category: Category): Promise<void> {
     await this.db.categories.put(category);
+  }
+
+  async delete(id: UUID): Promise<void> {
+    await this.db.categories.delete(id);
   }
 }
 
