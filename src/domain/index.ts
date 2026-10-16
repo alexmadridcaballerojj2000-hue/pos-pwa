@@ -11,6 +11,7 @@ export type ISODate = string; // ISO 8601 UTC
 
 export * from './format';
 export * from './ports/clock';
+export * from './ports/repositories';
 export * from './clock';
 export * from './ids';
 export * from './money';
