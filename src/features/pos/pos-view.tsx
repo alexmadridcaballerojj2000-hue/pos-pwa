@@ -1,6 +1,6 @@
 import React, { useEffect, useReducer, useRef, useState, useMemo, useCallback } from 'react';
 import { ShoppingBag, Store } from 'lucide-react';
-import type { Category, Product, Settings, TaxRate } from '@/domain';
+import type { Category, Product, Settings, TaxRate, User, UUID, SaleLine } from '@/domain';
 import {
   cartReducer,
   createEmptyCart,
@@ -9,18 +9,28 @@ import {
   type CurrencyConfig,
 } from '@/domain';
 import { repositories as defaultRepositories, type Repositories } from '@/data/repositories';
+import { type AppDatabase, db as defaultDb } from '@/data/db';
 import { productSearchIndex } from '@/features/catalog/search-index';
+import { useAuthStore } from '@/features/auth/auth-store';
 import { useI18n } from '@/app/i18n';
 import { CatalogPanel } from './catalog-panel';
 import { CartPanel } from './cart-panel';
+import { DiscountDialog } from './discount-dialog';
 import { useBarcodeScanner } from './use-barcode-scanner';
 
 export interface PosViewProps {
   onCheckout?: () => void;
   repos?: Repositories;
+  currentUser?: User | null;
+  db?: AppDatabase;
 }
 
-export const PosView: React.FC<PosViewProps> = ({ onCheckout, repos = defaultRepositories }) => {
+export const PosView: React.FC<PosViewProps> = ({
+  onCheckout,
+  repos = defaultRepositories,
+  currentUser: propUser,
+  db = defaultDb,
+}) => {
   const { t } = useI18n();
 
   // Settings & Reference Data
@@ -37,6 +47,15 @@ export const PosView: React.FC<PosViewProps> = ({ onCheckout, repos = defaultRep
 
   // Mobile navigation tab: 'catalog' | 'cart'
   const [activeTab, setActiveTab] = useState<'catalog' | 'cart'>('catalog');
+
+  // Auth User resolution
+  const storeUser = useAuthStore((s) => s.currentUser);
+  const activeUser = propUser !== undefined ? propUser : storeUser;
+
+  // Discount dialog state
+  const [editingDiscount, setEditingDiscount] = useState<
+    { target: 'order' } | { target: 'line'; lineId: UUID; line: SaleLine } | null
+  >(null);
 
   // Domain Cart Reducer
   const [cart, dispatchCart] = useReducer(cartReducer, undefined, () =>
@@ -248,12 +267,66 @@ export const PosView: React.FC<PosViewProps> = ({ onCheckout, repos = defaultRep
             onSetLineNote={(lineId, note) =>
               dispatchCart({ type: 'SET_LINE_NOTE', payload: { lineId, note } })
             }
+            onSetLineDiscount={(lineId) => {
+              const line = cart.lines.find((l) => l.lineId === lineId);
+              if (line) {
+                setEditingDiscount({ target: 'line', lineId, line });
+              }
+            }}
+            onSetOrderDiscount={() => {
+              setEditingDiscount({ target: 'order' });
+            }}
             onClearCart={() => dispatchCart({ type: 'CLEAR_CART' })}
             onCheckout={onCheckout}
             className="flex-1 overflow-hidden"
           />
         </div>
       </div>
+
+      {/* Discount Dialog */}
+      {editingDiscount && (
+        <DiscountDialog
+          isOpen={true}
+          onClose={() => setEditingDiscount(null)}
+          title={
+            editingDiscount.target === 'order'
+              ? t('pos.orderDiscount')
+              : `${t('pos.lineDiscount')} — ${editingDiscount.line.name}`
+          }
+          baseAmount={
+            editingDiscount.target === 'order'
+              ? cart.lines.reduce((acc, l) => acc + (l.lineBase - l.lineDiscount), 0)
+              : editingDiscount.line.lineBase
+          }
+          initialDiscount={
+            editingDiscount.target === 'order' ? cart.orderDiscount : editingDiscount.line.discount
+          }
+          currency={currency}
+          maxDiscountBp={settings?.maxDiscountBp ?? 1000}
+          currentUser={activeUser}
+          db={db}
+          onApplyDiscount={(discount) => {
+            if (editingDiscount.target === 'order') {
+              dispatchCart({ type: 'SET_ORDER_DISCOUNT', payload: discount });
+            } else {
+              dispatchCart({
+                type: 'SET_LINE_DISCOUNT',
+                payload: { lineId: editingDiscount.lineId, discount },
+              });
+            }
+          }}
+          onRemoveDiscount={() => {
+            if (editingDiscount.target === 'order') {
+              dispatchCart({ type: 'SET_ORDER_DISCOUNT', payload: undefined });
+            } else {
+              dispatchCart({
+                type: 'SET_LINE_DISCOUNT',
+                payload: { lineId: editingDiscount.lineId, discount: undefined },
+              });
+            }
+          }}
+        />
+      )}
     </div>
   );
 };
