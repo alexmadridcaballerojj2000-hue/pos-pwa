@@ -9,18 +9,20 @@ import {
   type TaxRate,
   type CsvRowValidation,
 } from '@/domain';
-import { db } from '@/data/db';
+import { db as defaultDb, type AppDatabase } from '@/data/db';
 
 interface CsvImportDialogProps {
   categories: Category[];
   taxRates: TaxRate[];
   onImportComplete: () => Promise<void>;
+  db?: AppDatabase;
 }
 
 export const CsvImportDialog: React.FC<CsvImportDialogProps> = ({
   categories,
   taxRates,
   onImportComplete,
+  db = defaultDb,
 }) => {
   const [csvContent, setCsvContent] = useState<string>('');
   const [fileName, setFileName] = useState<string | null>(null);

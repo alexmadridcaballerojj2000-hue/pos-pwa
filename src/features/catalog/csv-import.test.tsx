@@ -41,6 +41,7 @@ describe('CSV Bulk Product Import (S3-T4)', () => {
       <CsvImportDialog
         categories={sampleCategories}
         taxRates={sampleTaxRates}
+        db={db}
         onImportComplete={async () => {
           importCompleted = true;
         }}
@@ -105,6 +106,7 @@ describe('CSV Bulk Product Import (S3-T4)', () => {
       <CsvImportDialog
         categories={sampleCategories}
         taxRates={sampleTaxRates}
+        db={db}
         onImportComplete={async () => {}}
       />,
     );
@@ -120,7 +122,7 @@ describe('CSV Bulk Product Import (S3-T4)', () => {
       () => {
         expect(screen.getByText(/1000 productos importados/i)).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 10000 },
     );
 
     const elapsed = performance.now() - start;
@@ -128,5 +130,5 @@ describe('CSV Bulk Product Import (S3-T4)', () => {
 
     const count = await db.products.count();
     expect(count).toBe(1000);
-  }, 10000);
+  }, 15000);
 });

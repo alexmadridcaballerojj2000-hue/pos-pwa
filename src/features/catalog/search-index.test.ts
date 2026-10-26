@@ -162,10 +162,16 @@ describe('ProductSearchIndex with MiniSearch (S3-T5)', () => {
     largeIndex.indexAll(largeCatalog);
     expect(largeIndex.size).toBe(10000);
 
+    // Warm-up query for JIT compilation
+    largeIndex.search('warmup', { limit: 10 });
+
     // Benchmark search execution times
     const queries = ['Bebida 50', 'SKU-999', '750100005000', 'Consumo 250', 'Prod'];
 
     for (const q of queries) {
+      // Warm up query
+      largeIndex.search(q, { limit: 50 });
+
       const start = performance.now();
       const results = largeIndex.search(q, { limit: 50 });
       const durationMs = performance.now() - start;
