@@ -1,6 +1,15 @@
 import React, { useEffect, useReducer, useRef, useState, useMemo, useCallback } from 'react';
 import { ShoppingBag, Store } from 'lucide-react';
-import type { Category, Product, Settings, TaxRate, User, UUID, SaleLine } from '@/domain';
+import type {
+  Category,
+  Customer,
+  Product,
+  Settings,
+  TaxRate,
+  User,
+  UUID,
+  SaleLine,
+} from '@/domain';
 import {
   cartReducer,
   createEmptyCart,
@@ -16,6 +25,7 @@ import { useI18n } from '@/app/i18n';
 import { CatalogPanel } from './catalog-panel';
 import { CartPanel } from './cart-panel';
 import { DiscountDialog } from './discount-dialog';
+import { CustomerSelectorDialog } from './customer-selector-dialog';
 import { useBarcodeScanner } from './use-barcode-scanner';
 
 export interface PosViewProps {
@@ -61,6 +71,33 @@ export const PosView: React.FC<PosViewProps> = ({
   const [cart, dispatchCart] = useReducer(cartReducer, undefined, () =>
     createEmptyCart(settings?.pricesIncludeTax ?? true),
   );
+
+  // Customer selector state
+  const [isCustomerSelectorOpen, setIsCustomerSelectorOpen] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+
+  // Synchronize selectedCustomer with cart.customerId
+  useEffect(() => {
+    let isMounted = true;
+    if (!cart.customerId) {
+      setSelectedCustomer(null);
+      return;
+    }
+    // Only fetch if different from current selectedCustomer
+    if (selectedCustomer?.id !== cart.customerId) {
+      repos.customers.getById(cart.customerId).then((c) => {
+        if (isMounted) setSelectedCustomer(c ?? null);
+      });
+    }
+    return () => {
+      isMounted = false;
+    };
+  }, [cart.customerId, repos.customers, selectedCustomer?.id]);
+
+  const handleSelectCustomer = useCallback((customer: Customer | null) => {
+    setSelectedCustomer(customer);
+    dispatchCart({ type: 'SET_CUSTOMER', payload: customer?.id ?? null });
+  }, []);
 
   // Currency configuration
   const currency: CurrencyConfig = useMemo(() => {
@@ -276,6 +313,9 @@ export const PosView: React.FC<PosViewProps> = ({
             onSetOrderDiscount={() => {
               setEditingDiscount({ target: 'order' });
             }}
+            customerName={selectedCustomer?.name}
+            onSelectCustomer={() => setIsCustomerSelectorOpen(true)}
+            onClearCustomer={() => handleSelectCustomer(null)}
             onClearCart={() => dispatchCart({ type: 'CLEAR_CART' })}
             onCheckout={onCheckout}
             className="flex-1 overflow-hidden"
@@ -325,6 +365,18 @@ export const PosView: React.FC<PosViewProps> = ({
               });
             }
           }}
+        />
+      )}
+
+      {/* Customer Selector Dialog */}
+      {isCustomerSelectorOpen && (
+        <CustomerSelectorDialog
+          isOpen={isCustomerSelectorOpen}
+          onClose={() => setIsCustomerSelectorOpen(false)}
+          currentCustomerId={cart.customerId}
+          onSelectCustomer={handleSelectCustomer}
+          db={db}
+          customerRepo={repos.customers}
         />
       )}
     </div>

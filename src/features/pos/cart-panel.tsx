@@ -9,6 +9,7 @@ import {
   Percent,
   Clock,
   ArrowRight,
+  X,
 } from 'lucide-react';
 import type { CartState, UUID, Milli, CurrencyConfig } from '@/domain';
 import { formatMoney, formatQuantity } from '@/domain';
@@ -25,6 +26,7 @@ export interface CartPanelProps {
   onSetLineDiscount?: (lineId: UUID) => void;
   onSetOrderDiscount?: () => void;
   onSelectCustomer?: () => void;
+  onClearCustomer?: () => void;
   onHoldCart?: () => void;
   onClearCart: () => void;
   onCheckout?: () => void;
@@ -47,6 +49,7 @@ export const CartPanel: React.FC<CartPanelProps> = ({
   onClearCart,
   onCheckout,
   customerName,
+  onClearCustomer,
   heldCartsCount = 0,
   onOpenHeldCarts,
   className = '',
@@ -73,15 +76,39 @@ export const CartPanel: React.FC<CartPanelProps> = ({
     >
       {/* Top Header: Customer info & Cart actions */}
       <div className="p-3 border-b border-border shrink-0 flex items-center justify-between gap-2 bg-muted/20">
-        <button
-          type="button"
-          onClick={onSelectCustomer}
-          className="min-h-[44px] px-2.5 py-1.5 rounded-xl border border-border/80 bg-background hover:bg-muted/60 flex items-center gap-2 text-xs font-semibold text-foreground max-w-[200px] truncate transition-colors shadow-2xs"
-          aria-label={customerName ? `Cliente: ${customerName}` : t('pos.selectCustomer')}
-        >
-          <User className="h-4 w-4 text-primary shrink-0" />
-          <span className="truncate">{customerName || t('pos.generalCustomer')}</span>
-        </button>
+        {customerName ? (
+          <div className="flex items-center gap-1 min-h-[44px] px-2.5 py-1 rounded-xl border border-primary/40 bg-primary/10 text-xs font-semibold text-primary max-w-[210px] shadow-2xs">
+            <button
+              type="button"
+              onClick={onSelectCustomer}
+              className="flex items-center gap-1.5 truncate flex-1 text-left min-h-[36px]"
+              aria-label={`Cliente: ${customerName}`}
+            >
+              <User className="h-4 w-4 shrink-0 text-primary" />
+              <span className="truncate">{customerName}</span>
+            </button>
+            {onClearCustomer && (
+              <button
+                type="button"
+                onClick={onClearCustomer}
+                className="p-1 hover:bg-primary/20 rounded-lg text-primary shrink-0 min-h-[36px] min-w-[36px] flex items-center justify-center transition-colors"
+                aria-label={t('pos.removeCustomer')}
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={onSelectCustomer}
+            className="min-h-[44px] px-2.5 py-1.5 rounded-xl border border-border/80 bg-background hover:bg-muted/60 flex items-center gap-2 text-xs font-semibold text-foreground max-w-[200px] truncate transition-colors shadow-2xs"
+            aria-label={t('pos.selectCustomer')}
+          >
+            <User className="h-4 w-4 text-muted-foreground shrink-0" />
+            <span className="truncate">{t('pos.generalCustomer')}</span>
+          </button>
+        )}
 
         <div className="flex items-center gap-1.5">
           {onOpenHeldCarts && (
