@@ -357,8 +357,57 @@ export const PosView: React.FC<PosViewProps> = ({
       } else {
         setSearchQuery(barcode);
       }
+      searchInputRef.current?.focus();
     },
   });
+
+  // Keyboard shortcuts: F2 (Search), F4 (Checkout), Escape (Close dialog / clear search)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'F2') {
+        e.preventDefault();
+        setActiveTab('catalog');
+        searchInputRef.current?.focus();
+        searchInputRef.current?.select();
+      } else if (e.key === 'F4') {
+        e.preventDefault();
+        if (cart.lines.length > 0 && onCheckout) {
+          onCheckout();
+        }
+      } else if (e.key === 'Escape') {
+        if (editingDiscount) {
+          setEditingDiscount(null);
+          e.preventDefault();
+        } else if (isCustomerSelectorOpen) {
+          setIsCustomerSelectorOpen(false);
+          e.preventDefault();
+        } else if (isHoldCartDialogOpen) {
+          setIsHoldCartDialogOpen(false);
+          e.preventDefault();
+        } else if (isHeldCartsDialogOpen) {
+          setIsHeldCartsDialogOpen(false);
+          e.preventDefault();
+        } else if (searchQuery) {
+          setSearchQuery('');
+          e.preventDefault();
+        }
+        searchInputRef.current?.focus();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [
+    cart.lines.length,
+    onCheckout,
+    editingDiscount,
+    isCustomerSelectorOpen,
+    isHoldCartDialogOpen,
+    isHeldCartsDialogOpen,
+    searchQuery,
+  ]);
 
   const totalItemsCount = useMemo(() => {
     return cart.items.reduce((acc, item) => acc + item.qty / 1000, 0);
