@@ -106,6 +106,13 @@ export class ProductSearchIndex {
     }
   }
 
+  public lookupByBarcode(barcode: string): Product | null {
+    const trimmed = barcode.trim();
+    const id = this.barcodeMap.get(trimmed);
+    if (!id) return null;
+    return this.productsById.get(id) ?? null;
+  }
+
   public search(query: string, options?: ProductSearchOptions): Product[] {
     const trimmed = query.trim();
 

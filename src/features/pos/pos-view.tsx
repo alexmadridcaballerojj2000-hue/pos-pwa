@@ -12,6 +12,7 @@ import { repositories as defaultRepositories, type Repositories } from '@/data/r
 import { productSearchIndex } from '@/features/catalog/search-index';
 import { useI18n } from '@/app/i18n';
 import { CatalogPanel } from './catalog-panel';
+import { CartPanel } from './cart-panel';
 import { useBarcodeScanner } from './use-barcode-scanner';
 
 export interface PosViewProps {
@@ -233,90 +234,24 @@ export const PosView: React.FC<PosViewProps> = ({ onCheckout, repos = defaultRep
         {/* Right Panel: Cart Container (Always visible on lg, conditional on mobile) */}
         <div
           id="pos-cart-container"
-          className={`lg:col-span-5 xl:col-span-4 flex flex-col h-full overflow-hidden border border-border rounded-2xl bg-card p-4 shadow-xs ${
-            activeTab === 'cart' ? 'flex' : 'hidden lg:flex'
+          className={`lg:col-span-5 xl:col-span-4 h-full overflow-hidden ${
+            activeTab === 'cart' ? 'flex flex-col' : 'hidden lg:flex lg:flex-col'
           }`}
         >
-          {/* Header */}
-          <div className="flex items-center justify-between pb-3 border-b border-border shrink-0">
-            <div className="flex items-center gap-2">
-              <ShoppingBag className="h-5 w-5 text-primary" />
-              <h2 className="font-bold text-lg text-foreground">{t('pos.cart')}</h2>
-            </div>
-            {cart.items.length > 0 && (
-              <button
-                type="button"
-                onClick={() => dispatchCart({ type: 'CLEAR_CART' })}
-                className="min-h-[44px] px-2.5 py-1 text-xs text-destructive hover:bg-destructive/10 rounded-lg transition-colors font-medium"
-              >
-                {t('common.delete')}
-              </button>
-            )}
-          </div>
-
-          {/* Cart Items List Placeholder (completed in S4-T3) */}
-          <div className="flex-1 overflow-y-auto py-3 space-y-2">
-            {cart.items.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center text-center p-6 text-muted-foreground">
-                <ShoppingBag className="h-12 w-12 stroke-1 text-muted-foreground/40 mb-2" />
-                <p className="text-sm font-medium">{t('pos.emptyCart')}</p>
-                <p className="text-xs text-muted-foreground/70 mt-1">
-                  Seleccione productos del catálogo o escanee un código de barras.
-                </p>
-              </div>
-            ) : (
-              cart.lines.map((line) => (
-                <div
-                  key={line.lineId}
-                  className="p-2.5 rounded-xl border border-border/70 bg-background flex items-center justify-between gap-2"
-                >
-                  <div className="min-w-0 flex-1">
-                    <p className="font-semibold text-sm truncate text-foreground">{line.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {line.qty / 1000} &times; {formatMoney(line.unitPrice, currency)}
-                    </p>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <p className="font-bold text-sm text-foreground">
-                      {formatMoney(line.lineTotal, currency)}
-                    </p>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-
-          {/* Totals Summary */}
-          <div className="pt-3 border-t border-border shrink-0 space-y-1.5 text-sm">
-            <div className="flex justify-between text-muted-foreground">
-              <span>{t('pos.subtotal')}</span>
-              <span>{formatMoney(cart.totals.subtotal, currency)}</span>
-            </div>
-            {cart.totals.lineDiscounts > 0 && (
-              <div className="flex justify-between text-emerald-600 dark:text-emerald-400">
-                <span>{t('pos.lineDiscount')}</span>
-                <span>-{formatMoney(cart.totals.lineDiscounts, currency)}</span>
-              </div>
-            )}
-            <div className="flex justify-between text-muted-foreground">
-              <span>{t('pos.tax')}</span>
-              <span>{formatMoney(cart.totals.tax, currency)}</span>
-            </div>
-            <div className="flex justify-between text-lg font-bold text-foreground pt-1 border-t border-border/50">
-              <span>{t('pos.total')}</span>
-              <span className="text-primary">{formatMoney(cart.totals.total, currency)}</span>
-            </div>
-
-            {/* Charge Button */}
-            <button
-              type="button"
-              disabled={cart.items.length === 0}
-              onClick={onCheckout}
-              className="w-full min-h-[52px] mt-2 rounded-xl bg-primary text-primary-foreground font-bold text-base flex items-center justify-center gap-2 hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:scale-[0.99] transition-all"
-            >
-              <span>{t('pos.charge')}</span>
-            </button>
-          </div>
+          <CartPanel
+            cart={cart}
+            currency={currency}
+            onUpdateQty={(lineId, qty) =>
+              dispatchCart({ type: 'UPDATE_QTY', payload: { lineId, qty } })
+            }
+            onRemoveItem={(lineId) => dispatchCart({ type: 'REMOVE_ITEM', payload: { lineId } })}
+            onSetLineNote={(lineId, note) =>
+              dispatchCart({ type: 'SET_LINE_NOTE', payload: { lineId, note } })
+            }
+            onClearCart={() => dispatchCart({ type: 'CLEAR_CART' })}
+            onCheckout={onCheckout}
+            className="flex-1 overflow-hidden"
+          />
         </div>
       </div>
     </div>
