@@ -3,6 +3,7 @@ import type {
   Category,
   CustomFieldDef,
   Customer,
+  HeldCart,
   OutboxItem,
   OutboxStatus,
   Product,
@@ -97,6 +98,14 @@ export interface OutboxRepository {
 export interface AuditRepository {
   log(entry: AuditEntry): Promise<void>;
   listRecent(limit?: number): Promise<AuditEntry[]>;
+}
+
+export interface HeldCartRepository {
+  getById(id: UUID): Promise<HeldCart | null>;
+  list(limit?: number): Promise<HeldCart[]>;
+  count(): Promise<number>;
+  save(heldCart: HeldCart): Promise<void>;
+  delete(id: UUID): Promise<void>;
 }
 
 export interface MetaRepository {

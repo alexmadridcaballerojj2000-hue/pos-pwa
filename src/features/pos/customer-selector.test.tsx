@@ -79,7 +79,9 @@ describe('POS Customer Selector & Quick Alta (S4-T5)', () => {
     requireShift: false,
     allowNegativeStock: true,
     maxDiscountBp: 1000,
-    paymentMethods: [{ method: 'cash', active: true }],
+    paymentMethods: [
+      { id: 'cash', kind: 'cash', label: 'Efectivo', active: true, requireReference: false },
+    ],
     modules: {},
     receipt: { paperWidthMm: 80, template: null },
     mode: 'local',

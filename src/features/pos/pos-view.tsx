@@ -9,6 +9,9 @@ import type {
   User,
   UUID,
   SaleLine,
+  HeldCart,
+  Discount,
+  CartItemInput,
 } from '@/domain';
 import {
   cartReducer,
@@ -16,6 +19,7 @@ import {
   DEFAULT_CURRENCY,
   formatMoney,
   type CurrencyConfig,
+  v7,
 } from '@/domain';
 import { repositories as defaultRepositories, type Repositories } from '@/data/repositories';
 import { type AppDatabase, db as defaultDb } from '@/data/db';
@@ -26,6 +30,7 @@ import { CatalogPanel } from './catalog-panel';
 import { CartPanel } from './cart-panel';
 import { DiscountDialog } from './discount-dialog';
 import { CustomerSelectorDialog } from './customer-selector-dialog';
+import { HeldCartsDialog, HoldCartDialog } from './held-carts-dialog';
 import { useBarcodeScanner } from './use-barcode-scanner';
 
 export interface PosViewProps {
@@ -98,6 +103,167 @@ export const PosView: React.FC<PosViewProps> = ({
     setSelectedCustomer(customer);
     dispatchCart({ type: 'SET_CUSTOMER', payload: customer?.id ?? null });
   }, []);
+
+  // Held carts state
+  const [heldCarts, setHeldCarts] = useState<HeldCart[]>([]);
+  const [isHoldCartDialogOpen, setIsHoldCartDialogOpen] = useState(false);
+  const [isHeldCartsDialogOpen, setIsHeldCartsDialogOpen] = useState(false);
+  const [customersMap, setCustomersMap] = useState<Record<UUID, string>>({});
+  const isDraftRestoredRef = useRef(false);
+
+  const loadHeldCarts = useCallback(async () => {
+    try {
+      const list = await repos.heldCarts.list();
+      setHeldCarts(list);
+      const custIds = list.map((c) => c.customerId).filter(Boolean) as UUID[];
+      if (custIds.length > 0) {
+        const custs = await Promise.all(custIds.map((id) => repos.customers.getById(id)));
+        const map: Record<UUID, string> = {};
+        custs.forEach((c) => {
+          if (c) map[c.id] = c.name;
+        });
+        setCustomersMap((prev) => ({ ...prev, ...map }));
+      }
+    } catch (err) {
+      console.error('Failed to load held carts:', err);
+    }
+  }, [repos.customers, repos.heldCarts]);
+
+  // Restore draft on initial mount
+  useEffect(() => {
+    let isMounted = true;
+    async function restoreDraft() {
+      try {
+        const draft = await repos.meta.get<{
+          items: CartItemInput[];
+          orderDiscount?: Discount;
+          customerId?: UUID | null;
+          notes?: string;
+        }>('pos_active_cart_draft');
+        if (draft && isMounted && Array.isArray(draft.items) && draft.items.length > 0) {
+          draft.items.forEach((item) => {
+            dispatchCart({ type: 'ADD_ITEM', payload: item });
+          });
+          if (draft.orderDiscount) {
+            dispatchCart({ type: 'SET_ORDER_DISCOUNT', payload: draft.orderDiscount });
+          }
+          if (draft.customerId) {
+            dispatchCart({ type: 'SET_CUSTOMER', payload: draft.customerId });
+            const cust = await repos.customers.getById(draft.customerId);
+            if (isMounted && cust) {
+              setSelectedCustomer(cust);
+            }
+          }
+          if (draft.notes) {
+            dispatchCart({ type: 'SET_NOTES', payload: draft.notes });
+          }
+        }
+      } catch (err) {
+        console.error('Failed to restore cart draft:', err);
+      } finally {
+        if (isMounted) isDraftRestoredRef.current = true;
+      }
+    }
+
+    restoreDraft();
+    loadHeldCarts();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [repos.meta, repos.customers, loadHeldCarts]);
+
+  // Debounced auto-save draft to meta
+  useEffect(() => {
+    if (!isDraftRestoredRef.current) return;
+
+    const timer = setTimeout(async () => {
+      try {
+        if (cart.items.length > 0) {
+          const draft = {
+            items: cart.items,
+            orderDiscount: cart.orderDiscount,
+            customerId: cart.customerId,
+            notes: cart.notes,
+          };
+          await repos.meta.set('pos_active_cart_draft', draft);
+        } else {
+          await repos.meta.set('pos_active_cart_draft', null);
+        }
+      } catch (err) {
+        console.error('Failed to auto-save cart draft:', err);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [cart.items, cart.orderDiscount, cart.customerId, cart.notes, repos.meta]);
+
+  const handleHoldCart = useCallback(
+    async (label?: string) => {
+      if (cart.items.length === 0) return;
+
+      const newHeldCart: HeldCart = {
+        id: v7(),
+        cashierId: activeUser?.id ?? '00000000-0000-0000-0000-000000000000',
+        label:
+          label ||
+          `Venta ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
+        lines: cart.items,
+        customerId: cart.customerId ?? undefined,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      (newHeldCart as unknown as { cartData: unknown }).cartData = {
+        orderDiscount: cart.orderDiscount,
+        notes: cart.notes,
+        totals: cart.totals,
+      };
+
+      await repos.heldCarts.save(newHeldCart);
+      dispatchCart({ type: 'CLEAR_CART' });
+      await repos.meta.set('pos_active_cart_draft', null);
+      await loadHeldCarts();
+    },
+    [cart, activeUser?.id, repos.heldCarts, repos.meta, loadHeldCarts],
+  );
+
+  const handleResumeCart = useCallback(
+    async (heldCart: HeldCart) => {
+      dispatchCart({ type: 'CLEAR_CART' });
+
+      const lines = heldCart.lines as CartItemInput[];
+      if (Array.isArray(lines)) {
+        lines.forEach((item) => {
+          dispatchCart({ type: 'ADD_ITEM', payload: item });
+        });
+      }
+
+      const anyHc = heldCart as unknown as {
+        cartData?: { orderDiscount?: Discount; notes?: string };
+      };
+      if (anyHc.cartData?.orderDiscount) {
+        dispatchCart({ type: 'SET_ORDER_DISCOUNT', payload: anyHc.cartData.orderDiscount });
+      }
+      if (heldCart.customerId) {
+        dispatchCart({ type: 'SET_CUSTOMER', payload: heldCart.customerId });
+      }
+      if (anyHc.cartData?.notes) {
+        dispatchCart({ type: 'SET_NOTES', payload: anyHc.cartData.notes });
+      }
+
+      await repos.heldCarts.delete(heldCart.id);
+      await loadHeldCarts();
+    },
+    [repos.heldCarts, loadHeldCarts],
+  );
+
+  const handleDiscardHeldCart = useCallback(
+    async (heldCartId: UUID) => {
+      await repos.heldCarts.delete(heldCartId);
+      await loadHeldCarts();
+    },
+    [repos.heldCarts, loadHeldCarts],
+  );
 
   // Currency configuration
   const currency: CurrencyConfig = useMemo(() => {
@@ -316,7 +482,13 @@ export const PosView: React.FC<PosViewProps> = ({
             customerName={selectedCustomer?.name}
             onSelectCustomer={() => setIsCustomerSelectorOpen(true)}
             onClearCustomer={() => handleSelectCustomer(null)}
-            onClearCart={() => dispatchCart({ type: 'CLEAR_CART' })}
+            heldCartsCount={heldCarts.length}
+            onHoldCart={() => setIsHoldCartDialogOpen(true)}
+            onOpenHeldCarts={() => setIsHeldCartsDialogOpen(true)}
+            onClearCart={() => {
+              dispatchCart({ type: 'CLEAR_CART' });
+              repos.meta.set('pos_active_cart_draft', null).catch(console.error);
+            }}
             onCheckout={onCheckout}
             className="flex-1 overflow-hidden"
           />
@@ -377,6 +549,29 @@ export const PosView: React.FC<PosViewProps> = ({
           onSelectCustomer={handleSelectCustomer}
           db={db}
           customerRepo={repos.customers}
+        />
+      )}
+
+      {/* Hold Cart Dialog */}
+      {isHoldCartDialogOpen && (
+        <HoldCartDialog
+          isOpen={isHoldCartDialogOpen}
+          onClose={() => setIsHoldCartDialogOpen(false)}
+          onConfirmHold={handleHoldCart}
+        />
+      )}
+
+      {/* Held Carts List Dialog */}
+      {isHeldCartsDialogOpen && (
+        <HeldCartsDialog
+          isOpen={isHeldCartsDialogOpen}
+          onClose={() => setIsHeldCartsDialogOpen(false)}
+          heldCarts={heldCarts}
+          currency={currency}
+          customersMap={customersMap}
+          hasActiveCartItems={cart.items.length > 0}
+          onResumeCart={handleResumeCart}
+          onDiscardCart={handleDiscardHeldCart}
         />
       )}
     </div>

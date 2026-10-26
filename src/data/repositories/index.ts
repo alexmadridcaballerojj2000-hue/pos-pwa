@@ -7,6 +7,8 @@ import type {
   CustomFieldDefRepository,
   Customer,
   CustomerRepository,
+  HeldCart,
+  HeldCartRepository,
   MetaRepository,
   OutboxItem,
   OutboxRepository,
@@ -320,6 +322,31 @@ export class DexieMetaRepository implements MetaRepository {
   }
 }
 
+export class DexieHeldCartRepository implements HeldCartRepository {
+  constructor(private readonly db: AppDatabase = defaultDb) {}
+
+  async getById(id: UUID): Promise<HeldCart | null> {
+    const cart = await this.db.heldCarts.get(id);
+    return cart ?? null;
+  }
+
+  async list(limit = 50): Promise<HeldCart[]> {
+    return this.db.heldCarts.orderBy('createdAt').reverse().limit(limit).toArray();
+  }
+
+  async count(): Promise<number> {
+    return this.db.heldCarts.count();
+  }
+
+  async save(heldCart: HeldCart): Promise<void> {
+    await this.db.heldCarts.put(heldCart);
+  }
+
+  async delete(id: UUID): Promise<void> {
+    await this.db.heldCarts.delete(id);
+  }
+}
+
 export interface Repositories {
   users: UserRepository;
   settings: SettingsRepository;
@@ -333,6 +360,7 @@ export interface Repositories {
   outbox: OutboxRepository;
   audit: AuditRepository;
   meta: MetaRepository;
+  heldCarts: HeldCartRepository;
 }
 
 export function createRepositories(db: AppDatabase = defaultDb): Repositories {
@@ -349,6 +377,7 @@ export function createRepositories(db: AppDatabase = defaultDb): Repositories {
     outbox: new DexieOutboxRepository(db),
     audit: new DexieAuditRepository(db),
     meta: new DexieMetaRepository(db),
+    heldCarts: new DexieHeldCartRepository(db),
   };
 }
 
