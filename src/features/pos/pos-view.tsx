@@ -1,4 +1,4 @@
-import React, { useEffect, useReducer, useRef, useState, useMemo } from 'react';
+import React, { useEffect, useReducer, useRef, useState, useMemo, useCallback } from 'react';
 import { ShoppingBag, Store } from 'lucide-react';
 import type { Category, Product, Settings, TaxRate } from '@/domain';
 import {
@@ -12,6 +12,7 @@ import { repositories as defaultRepositories, type Repositories } from '@/data/r
 import { productSearchIndex } from '@/features/catalog/search-index';
 import { useI18n } from '@/app/i18n';
 import { CatalogPanel } from './catalog-panel';
+import { useBarcodeScanner } from './use-barcode-scanner';
 
 export interface PosViewProps {
   onCheckout?: () => void;
@@ -101,25 +102,40 @@ export const PosView: React.FC<PosViewProps> = ({ onCheckout, repos = defaultRep
   }, [searchQuery, selectedCategoryId, products]);
 
   // Add product to cart handler
-  const handleSelectProduct = (product: Product) => {
-    // Determine tax rate
-    const taxRate = taxRates.find((r) => r.id === product.taxRateId);
-    const taxRateBp = taxRate ? taxRate.rateBp : 0;
+  const handleSelectProduct = useCallback(
+    (product: Product) => {
+      // Determine tax rate
+      const taxRate = taxRates.find((r) => r.id === product.taxRateId);
+      const taxRateBp = taxRate ? taxRate.rateBp : 0;
 
-    dispatchCart({
-      type: 'ADD_ITEM',
-      payload: {
-        lineId: crypto.randomUUID(),
-        productId: product.id,
-        sku: product.sku,
-        name: product.name,
-        qty: 1000, // 1 unit default
-        unitPrice: product.priceMinor,
-        taxRateId: product.taxRateId,
-        taxRateBp,
-      },
-    });
-  };
+      dispatchCart({
+        type: 'ADD_ITEM',
+        payload: {
+          lineId: crypto.randomUUID(),
+          productId: product.id,
+          sku: product.sku,
+          name: product.name,
+          qty: 1000, // 1 unit default
+          unitPrice: product.priceMinor,
+          taxRateId: product.taxRateId,
+          taxRateBp,
+        },
+      });
+    },
+    [taxRates],
+  );
+
+  // Hardware barcode scanner hook (< 35 ms keystroke burst + Enter)
+  useBarcodeScanner({
+    onScan: (barcode) => {
+      const product = productSearchIndex.lookupByBarcode(barcode);
+      if (product) {
+        handleSelectProduct(product);
+      } else {
+        setSearchQuery(barcode);
+      }
+    },
+  });
 
   const totalItemsCount = useMemo(() => {
     return cart.items.reduce((acc, item) => acc + item.qty / 1000, 0);
