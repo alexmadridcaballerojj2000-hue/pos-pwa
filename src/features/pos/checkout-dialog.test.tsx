@@ -152,12 +152,12 @@ describe('CheckoutDialog Component (S5-T1)', () => {
 
     await waitFor(() => {
       expect(onComplete).toHaveBeenCalledTimes(1);
-      const params = onComplete.mock.calls[0][0];
+      const params = onComplete.mock.calls[0]![0]!;
       expect(params.saleId).toBeDefined();
       expect(params.change).toBe(5500); // $55.00 change
       expect(params.payments).toHaveLength(1);
-      expect(params.payments[0].amount).toBe(14500);
-      expect(params.payments[0].tendered).toBe(20000);
+      expect(params.payments[0]!.amount).toBe(14500);
+      expect(params.payments[0]!.tendered).toBe(20000);
     });
   });
 
@@ -202,13 +202,13 @@ describe('CheckoutDialog Component (S5-T1)', () => {
 
     await waitFor(() => {
       expect(onComplete).toHaveBeenCalledTimes(1);
-      const params = onComplete.mock.calls[0][0];
+      const params = onComplete.mock.calls[0]![0]!;
       expect(params.payments).toHaveLength(2);
-      expect(params.payments[0].method).toBe('cash');
-      expect(params.payments[0].amount).toBe(4500);
-      expect(params.payments[1].method).toBe('card');
-      expect(params.payments[1].amount).toBe(10000);
-      expect(params.payments[1].reference).toBe('AUTH-1234');
+      expect(params.payments[0]!.method).toBe('cash');
+      expect(params.payments[0]!.amount).toBe(4500);
+      expect(params.payments[1]!.method).toBe('card');
+      expect(params.payments[1]!.amount).toBe(10000);
+      expect(params.payments[1]!.reference).toBe('AUTH-1234');
       expect(params.change).toBe(0);
     });
   });

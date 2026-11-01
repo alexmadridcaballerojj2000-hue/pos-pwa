@@ -8,6 +8,7 @@ import type {
   TaxRate,
   User,
   UUID,
+  Sale,
   SaleLine,
   HeldCart,
   Discount,
@@ -32,6 +33,7 @@ import { DiscountDialog } from './discount-dialog';
 import { CustomerSelectorDialog } from './customer-selector-dialog';
 import { HeldCartsDialog, HoldCartDialog } from './held-carts-dialog';
 import { CheckoutDialog } from './checkout-dialog';
+import { completeSale } from './complete-sale';
 import { useBarcodeScanner } from './use-barcode-scanner';
 
 export interface PosViewProps {
@@ -110,6 +112,7 @@ export const PosView: React.FC<PosViewProps> = ({
   const [isHoldCartDialogOpen, setIsHoldCartDialogOpen] = useState(false);
   const [isHeldCartsDialogOpen, setIsHeldCartsDialogOpen] = useState(false);
   const [isCheckoutDialogOpen, setIsCheckoutDialogOpen] = useState(false);
+  const [_completedSale, setCompletedSale] = useState<Sale | null>(null);
   const [customersMap, setCustomersMap] = useState<Record<UUID, string>>({});
   const isDraftRestoredRef = useRef(false);
 
@@ -645,10 +648,20 @@ export const PosView: React.FC<PosViewProps> = ({
           currency={currency}
           paymentMethods={settings?.paymentMethods ?? []}
           customerName={selectedCustomer?.name}
-          onCompleteSale={async () => {
+          onCompleteSale={async (params) => {
+            const cashierId = activeUser?.id ?? ('00000000-0000-0000-0000-000000000000' as UUID);
+            const sale = await completeSale(db, {
+              saleId: params.saleId,
+              cart,
+              payments: params.payments,
+              change: params.change,
+              cashierId,
+              currency,
+              settings,
+            });
             setIsCheckoutDialogOpen(false);
             dispatchCart({ type: 'CLEAR_CART' });
-            await repos.meta.set('pos_active_cart_draft', null);
+            setCompletedSale(sale);
           }}
         />
       )}
