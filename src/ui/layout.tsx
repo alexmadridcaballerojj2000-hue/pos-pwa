@@ -8,6 +8,7 @@ import {
   Boxes,
   BarChart3,
   Settings,
+  ShieldCheck,
   Sun,
   Moon,
   Laptop,
@@ -30,6 +31,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/shifts', labelKey: 'nav.shifts', icon: Clock },
   { to: '/inventory', labelKey: 'nav.inventory', icon: Boxes },
   { to: '/reports', labelKey: 'nav.reports', icon: BarChart3 },
+  { to: '/audit', labelKey: 'nav.audit', icon: ShieldCheck },
   { to: '/settings', labelKey: 'nav.settings', icon: Settings },
 ];
 

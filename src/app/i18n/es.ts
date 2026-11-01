@@ -7,6 +7,7 @@ export const es = {
     inventory: 'Inventario',
     reports: 'Reportes',
     settings: 'Ajustes',
+    audit: 'Auditoría',
   },
   common: {
     save: 'Guardar',

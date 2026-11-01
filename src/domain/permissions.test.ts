@@ -15,6 +15,7 @@ const ALL_PERMISSIONS: Permission[] = [
   'settings:manage',
   'users:manage',
   'reports:view',
+  'audit:view',
 ];
 
 const createTestUser = (role: UserRole, active = true): User => ({
@@ -59,6 +60,7 @@ describe('Permissions & Authorization: can(user, permission)', () => {
     expect(can(cashier, 'settings:manage')).toBe(false);
     expect(can(cashier, 'users:manage')).toBe(false);
     expect(can(cashier, 'reports:view')).toBe(false);
+    expect(can(cashier, 'audit:view')).toBe(false);
   });
 
   it('returns false for null or undefined user', () => {

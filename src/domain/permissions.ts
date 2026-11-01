@@ -11,7 +11,8 @@ export type Permission =
   | 'catalog:manage'
   | 'settings:manage'
   | 'users:manage'
-  | 'reports:view';
+  | 'reports:view'
+  | 'audit:view';
 
 const ROLE_PERMISSIONS: Record<UserRole, readonly Permission[]> = {
   owner: [
@@ -26,6 +27,7 @@ const ROLE_PERMISSIONS: Record<UserRole, readonly Permission[]> = {
     'settings:manage',
     'users:manage',
     'reports:view',
+    'audit:view',
   ],
   manager: [
     'sales:create',
@@ -38,6 +40,7 @@ const ROLE_PERMISSIONS: Record<UserRole, readonly Permission[]> = {
     'catalog:manage',
     'settings:manage',
     'reports:view',
+    'audit:view',
   ],
   cashier: ['sales:create', 'sales:return', 'shift:manage', 'cash:movement'],
 };
