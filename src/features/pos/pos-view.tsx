@@ -31,6 +31,7 @@ import { CartPanel } from './cart-panel';
 import { DiscountDialog } from './discount-dialog';
 import { CustomerSelectorDialog } from './customer-selector-dialog';
 import { HeldCartsDialog, HoldCartDialog } from './held-carts-dialog';
+import { CheckoutDialog } from './checkout-dialog';
 import { useBarcodeScanner } from './use-barcode-scanner';
 
 export interface PosViewProps {
@@ -108,6 +109,7 @@ export const PosView: React.FC<PosViewProps> = ({
   const [heldCarts, setHeldCarts] = useState<HeldCart[]>([]);
   const [isHoldCartDialogOpen, setIsHoldCartDialogOpen] = useState(false);
   const [isHeldCartsDialogOpen, setIsHeldCartsDialogOpen] = useState(false);
+  const [isCheckoutDialogOpen, setIsCheckoutDialogOpen] = useState(false);
   const [customersMap, setCustomersMap] = useState<Record<UUID, string>>({});
   const isDraftRestoredRef = useRef(false);
 
@@ -361,6 +363,15 @@ export const PosView: React.FC<PosViewProps> = ({
     },
   });
 
+  const handleOpenCheckout = useCallback(() => {
+    if (cart.lines.length === 0) return;
+    if (onCheckout) {
+      onCheckout();
+    } else {
+      setIsCheckoutDialogOpen(true);
+    }
+  }, [cart.lines.length, onCheckout]);
+
   // Keyboard shortcuts: F2 (Search), F4 (Checkout), Escape (Close dialog / clear search)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -371,11 +382,12 @@ export const PosView: React.FC<PosViewProps> = ({
         searchInputRef.current?.select();
       } else if (e.key === 'F4') {
         e.preventDefault();
-        if (cart.lines.length > 0 && onCheckout) {
-          onCheckout();
-        }
+        handleOpenCheckout();
       } else if (e.key === 'Escape') {
-        if (editingDiscount) {
+        if (isCheckoutDialogOpen) {
+          setIsCheckoutDialogOpen(false);
+          e.preventDefault();
+        } else if (editingDiscount) {
           setEditingDiscount(null);
           e.preventDefault();
         } else if (isCustomerSelectorOpen) {
@@ -400,8 +412,8 @@ export const PosView: React.FC<PosViewProps> = ({
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [
-    cart.lines.length,
-    onCheckout,
+    handleOpenCheckout,
+    isCheckoutDialogOpen,
     editingDiscount,
     isCustomerSelectorOpen,
     isHoldCartDialogOpen,
@@ -538,7 +550,7 @@ export const PosView: React.FC<PosViewProps> = ({
               dispatchCart({ type: 'CLEAR_CART' });
               repos.meta.set('pos_active_cart_draft', null).catch(console.error);
             }}
-            onCheckout={onCheckout}
+            onCheckout={handleOpenCheckout}
             className="flex-1 overflow-hidden"
           />
         </div>
@@ -621,6 +633,23 @@ export const PosView: React.FC<PosViewProps> = ({
           hasActiveCartItems={cart.items.length > 0}
           onResumeCart={handleResumeCart}
           onDiscardCart={handleDiscardHeldCart}
+        />
+      )}
+
+      {/* Checkout Dialog */}
+      {isCheckoutDialogOpen && (
+        <CheckoutDialog
+          isOpen={isCheckoutDialogOpen}
+          onClose={() => setIsCheckoutDialogOpen(false)}
+          cart={cart}
+          currency={currency}
+          paymentMethods={settings?.paymentMethods ?? []}
+          customerName={selectedCustomer?.name}
+          onCompleteSale={async () => {
+            setIsCheckoutDialogOpen(false);
+            dispatchCart({ type: 'CLEAR_CART' });
+            await repos.meta.set('pos_active_cart_draft', null);
+          }}
         />
       )}
     </div>
