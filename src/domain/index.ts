@@ -27,3 +27,4 @@ export * from './csv';
 export * from './receipt';
 export * from './escpos/codepages';
 export * from './escpos/encoder';
+export * from './escpos/renderer';
