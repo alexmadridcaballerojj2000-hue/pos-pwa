@@ -72,6 +72,7 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
 
   // Generate a client-side UUIDv7 saleId on dialog open for idempotency (Rule 6)
   const saleIdRef = useRef<UUID>(v7());
+  const isSubmittingRef = useRef<boolean>(false);
 
   // Calculate current payment summary from applied payments
   const summary = useMemo(() => {
@@ -103,6 +104,7 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
       setPayments([]);
       setErrorMsg(null);
       setIsSubmitting(false);
+      isSubmittingRef.current = false;
       setReference('');
       const defaultMethod = activeMethods.find((m) => m.kind === 'cash') ?? activeMethods[0];
       if (defaultMethod) {
@@ -239,7 +241,7 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
 
   // Submit and complete the sale
   const handleCompleteSale = async () => {
-    if (isSubmitting) return;
+    if (isSubmitting || isSubmittingRef.current) return;
     setErrorMsg(null);
 
     let finalPayments = [...payments];
@@ -298,6 +300,7 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
     }
 
     try {
+      isSubmittingRef.current = true;
       setIsSubmitting(true);
       await onCompleteSale({
         saleId: saleIdRef.current,
@@ -305,6 +308,7 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
         change: finalSummary.change,
       });
     } catch (err) {
+      isSubmittingRef.current = false;
       setIsSubmitting(false);
       setErrorMsg(err instanceof Error ? err.message : 'Error al procesar la venta');
     }
