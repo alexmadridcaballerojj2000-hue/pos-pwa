@@ -110,7 +110,7 @@ describe('Sprint S5 Acceptance Test Suite (docs/BACKLOG.md & docs/SPEC.md)', () 
   let db: AppDatabase;
 
   beforeEach(async () => {
-    db = createAppDatabase('pos_pwa_acceptance_test_db', { indexedDB });
+    db = createAppDatabase(`pos_pwa_acceptance_test_db_${Date.now()}_${Math.random()}`);
     await db.open();
 
     // Clear and seed reference entities
