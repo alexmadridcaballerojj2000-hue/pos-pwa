@@ -1,5 +1,5 @@
 import React, { useEffect, useReducer, useRef, useState, useMemo, useCallback } from 'react';
-import { ShoppingBag, Store } from 'lucide-react';
+import { ShoppingBag, Store, AlertCircle } from 'lucide-react';
 import type {
   Category,
   Customer,
@@ -27,6 +27,7 @@ import { type AppDatabase, db as defaultDb } from '@/data/db';
 import { productSearchIndex } from '@/features/catalog/search-index';
 import { useAuthStore } from '@/features/auth/auth-store';
 import { useI18n } from '@/app/i18n';
+import { OpenShiftDialog } from '@/features/shifts/open-shift-dialog';
 import { CatalogPanel } from './catalog-panel';
 import { CartPanel } from './cart-panel';
 import { DiscountDialog } from './discount-dialog';
@@ -119,6 +120,23 @@ export const PosView: React.FC<PosViewProps> = ({
   );
   const [customersMap, setCustomersMap] = useState<Record<UUID, string>>({});
   const isDraftRestoredRef = useRef(false);
+
+  // Shift guard state (SPEC §6.5 & S7-T5)
+  const [hasOpenShift, setHasOpenShift] = useState<boolean | null>(null);
+  const [isOpenShiftDialogOpen, setIsOpenShiftDialogOpen] = useState(false);
+
+  const checkShiftStatus = useCallback(async () => {
+    try {
+      const current = await repos.shifts.getCurrentOpen();
+      setHasOpenShift(!!current);
+    } catch {
+      setHasOpenShift(null);
+    }
+  }, [repos.shifts]);
+
+  useEffect(() => {
+    checkShiftStatus();
+  }, [checkShiftStatus]);
 
   const paymentMethodLabels = useMemo(() => {
     const map: Record<string, string> = {};
@@ -380,12 +398,16 @@ export const PosView: React.FC<PosViewProps> = ({
 
   const handleOpenCheckout = useCallback(() => {
     if (cart.lines.length === 0) return;
+    if (settings?.requireShift && !hasOpenShift) {
+      setIsOpenShiftDialogOpen(true);
+      return;
+    }
     if (onCheckout) {
       onCheckout();
     } else {
       setIsCheckoutDialogOpen(true);
     }
-  }, [cart.lines.length, onCheckout]);
+  }, [cart.lines.length, settings?.requireShift, hasOpenShift, onCheckout]);
 
   // Keyboard shortcuts: F2 (Search), F4 (Checkout), Escape (Close dialog / clear search)
   useEffect(() => {
@@ -443,6 +465,23 @@ export const PosView: React.FC<PosViewProps> = ({
   return (
     <div className="flex flex-col h-[calc(100vh-theme(spacing.20))] max-h-[calc(100vh-theme(spacing.20))]">
       <h1 className="sr-only">{t('pos.title')}</h1>
+
+      {/* Shift required warning banner (SPEC §6.5 & S7-T5) */}
+      {settings?.requireShift && hasOpenShift === false && (
+        <div className="bg-amber-500/10 border-b border-amber-500/20 px-4 py-2.5 flex items-center justify-between gap-3 text-amber-800 dark:text-amber-300 shrink-0">
+          <div className="flex items-center gap-2 text-sm font-medium">
+            <AlertCircle className="w-4 h-4 shrink-0 text-amber-600 dark:text-amber-400" />
+            <span>{t('shifts.requireShiftAlert')}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsOpenShiftDialogOpen(true)}
+            className="px-3.5 py-1.5 text-xs font-bold rounded-lg bg-amber-600 hover:bg-amber-700 text-white shadow-sm transition-colors shrink-0"
+          >
+            {t('shifts.openShift')}
+          </button>
+        </div>
+      )}
 
       {/* Mobile Tab Navigation Bar (Hidden on Desktop >= 1024px) */}
       <div className="lg:hidden flex items-center border-b border-border mb-3 shrink-0">
@@ -704,6 +743,20 @@ export const PosView: React.FC<PosViewProps> = ({
           }}
         />
       )}
+
+      {/* Open Shift Dialog Guard */}
+      <OpenShiftDialog
+        isOpen={isOpenShiftDialogOpen}
+        onClose={() => setIsOpenShiftDialogOpen(false)}
+        currency={currency}
+        onShiftOpened={() => {
+          setHasOpenShift(true);
+          // If items already in cart, proceed to checkout immediately
+          if (cart.lines.length > 0) {
+            setIsCheckoutDialogOpen(true);
+          }
+        }}
+      />
     </div>
   );
 };
