@@ -25,3 +25,5 @@ export * from './security';
 export * from './permissions';
 export * from './csv';
 export * from './receipt';
+export * from './escpos/codepages';
+export * from './escpos/encoder';
