@@ -16,6 +16,8 @@ import {
 import type { Settings, PaymentMethodConfig, CustomFieldDef } from '@/domain';
 import { repositories } from '@/data/repositories';
 import { CustomFieldManager } from '@/features/catalog/custom-field-manager';
+import { PrinterSettings } from './printer-settings';
+import { printerService, DEFAULT_PRINTER_CONFIG } from '@/hardware';
 import { useI18n } from '@/app/i18n';
 
 type SettingsTab = 'business' | 'sales' | 'payments' | 'receipt' | 'customFields' | 'system';
@@ -80,6 +82,9 @@ export const SettingsView: React.FC = () => {
     if (!isMountedRef || isMountedRef()) {
       if (savedSettings) {
         setSettings(savedSettings);
+        if (savedSettings.printer) {
+          printerService.setConfig(savedSettings.printer);
+        }
       }
       setCustomFields(fields);
     }
@@ -98,6 +103,9 @@ export const SettingsView: React.FC = () => {
     setIsSaving(true);
     try {
       await repositories.settings.save(settings);
+      if (settings.printer) {
+        printerService.setConfig(settings.printer);
+      }
       setIsSavedNotice(true);
       setTimeout(() => setIsSavedNotice(false), 3000);
     } finally {
@@ -625,38 +633,31 @@ export const SettingsView: React.FC = () => {
 
       {/* Tab 4: Receipt Configuration */}
       {activeTab === 'receipt' && (
-        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 space-y-6">
-          <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <Printer className="w-5 h-5 text-emerald-600" />
-            Configuración de Tickets Térmicos
-          </h2>
+        <div className="space-y-6">
+          <PrinterSettings
+            config={
+              settings.printer ?? {
+                ...DEFAULT_PRINTER_CONFIG,
+                paperWidthMm: settings.receipt.paperWidthMm,
+              }
+            }
+            onChange={(newPrinterConfig) => {
+              setSettings((prev) => ({
+                ...prev,
+                printer: newPrinterConfig,
+                receipt: {
+                  ...prev.receipt,
+                  paperWidthMm: newPrinterConfig.paperWidthMm,
+                },
+              }));
+            }}
+          />
 
-          <div className="space-y-4">
-            <div>
-              <label
-                htmlFor="settings-receipt-width"
-                className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1"
-              >
-                Ancho del Papel de la Impresora
-              </label>
-              <select
-                id="settings-receipt-width"
-                value={settings.receipt.paperWidthMm}
-                onChange={(e) =>
-                  setSettings((prev) => ({
-                    ...prev,
-                    receipt: {
-                      ...prev.receipt,
-                      paperWidthMm: Number(e.target.value) as 58 | 80,
-                    },
-                  }))
-                }
-                className="w-full sm:w-64 h-11 px-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm"
-              >
-                <option value={58}>58 mm (Impresora compacta / Bluetooth)</option>
-                <option value={80}>80 mm (Impresora de punto de venta estándar)</option>
-              </select>
-            </div>
+          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 space-y-4">
+            <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <Printer className="w-5 h-5 text-emerald-600" />
+              Mensaje al Pie del Recibo
+            </h3>
 
             <div>
               <label
