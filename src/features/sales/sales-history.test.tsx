@@ -231,6 +231,7 @@ describe('Sales History Feature (S5-T5)', () => {
           mockAuditLogs.push(entry);
         }),
         listRecent: vi.fn(async () => []),
+        list: vi.fn(async () => []),
       },
       categories: { getById: vi.fn(), list: vi.fn(async () => []), save: vi.fn(), delete: vi.fn() },
       taxRates: {
@@ -259,8 +260,13 @@ describe('Sales History Feature (S5-T5)', () => {
       shifts: {
         getCurrentOpen: vi.fn(async () => null),
         getById: vi.fn(),
+        list: vi.fn(async () => []),
         open: vi.fn(),
         close: vi.fn(),
+      },
+      cashMovements: {
+        add: vi.fn(),
+        listByShift: vi.fn(async () => []),
       },
       outbox: {
         enqueue: vi.fn(),

@@ -106,10 +106,10 @@ export const ShiftsView: React.FC = () => {
       const summary = await getShiftSummary(db, shift.id);
       const settings = await db.settings.toCollection().first();
       const business = {
-        name: settings?.businessName || 'Mi Negocio',
-        taxId: settings?.taxId,
-        address: settings?.address,
-        phone: settings?.phone,
+        name: settings?.business?.name || 'Mi Negocio',
+        taxId: settings?.business?.taxId,
+        address: settings?.business?.address,
+        phone: settings?.business?.phone,
       };
 
       const doc = buildZReportDoc({
@@ -118,7 +118,7 @@ export const ShiftsView: React.FC = () => {
         currency,
         openedByName: usersMap[shift.openedBy] ?? shift.openedBy,
         closedByName: shift.closedBy ? (usersMap[shift.closedBy] ?? shift.closedBy) : undefined,
-        paperWidthMm: settings?.printer?.paperWidthMm ?? 80,
+        paperWidthMm: settings?.printer?.paperWidthMm ?? settings?.receipt?.paperWidthMm ?? 80,
         isPartialXReport: isPartial,
       });
 

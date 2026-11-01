@@ -1,4 +1,3 @@
-import React from 'react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -17,7 +16,7 @@ vi.mock('@/hardware', () => ({
   DEFAULT_PRINTER_CONFIG: {
     driver: 'browser',
     paperWidthMm: 80,
-    codePage: 'cp858',
+    codePage: 'CP858',
     autoCut: true,
     openDrawer: false,
     drawerPin: 2,
@@ -93,7 +92,6 @@ describe('POS Shift Guard (SPEC §6.5 & S7-T5)', () => {
 
     useAuthStore.setState({
       currentUser: cashierUser,
-      isAuthenticated: true,
     });
   });
 

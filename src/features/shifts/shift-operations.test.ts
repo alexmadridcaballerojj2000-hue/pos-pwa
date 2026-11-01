@@ -7,17 +7,7 @@ import {
   getCurrentShiftSummary,
   closeShift,
 } from './shift-operations';
-import { type Clock, type Sale, type UUID, v7 } from '@/domain';
-
-class FakeClock implements Clock {
-  constructor(private current: Date = new Date('2026-11-01T10:00:00.000Z')) {}
-  now(): Date {
-    return this.current;
-  }
-  advance(ms: number) {
-    this.current = new Date(this.current.getTime() + ms);
-  }
-}
+import { FakeClock, type Sale, type UUID, v7 } from '@/domain';
 
 describe('shift-operations', () => {
   let db: AppDatabase;
@@ -192,19 +182,22 @@ describe('shift-operations', () => {
           subtotal: 7500,
           lineDiscounts: 0,
           orderDiscount: 0,
-          totalDiscount: 0,
           tax: 0,
           total: 7500,
+          roundingAdjustment: 0,
           taxBreakdown: [],
         },
         payments: [
-          { method: 'cash', amount: 2500 },
-          { method: 'card', amount: 5000 },
+          { id: v7(), createdAt: clock.nowIso(), method: 'cash', amount: 2500 },
+          { id: v7(), createdAt: clock.nowIso(), method: 'card', amount: 5000 },
         ],
         change: 0,
         pricesIncludeTax: true,
+        currency: 'MXN',
+        custom: {},
+        createdAt: clock.nowIso(),
         completedAt: clock.now().toISOString(),
-        receiptPrinted: false,
+        schemaVersion: 1,
       };
       await db.sales.add(sale1);
 
@@ -259,7 +252,7 @@ describe('shift-operations', () => {
 
       // Outbox check (update event)
       const outbox = (await db.outbox.toArray()).filter((o) => o.entityId === shift.id);
-      const closeEvent = outbox.find((o) => o.op === 'update');
+      const closeEvent = outbox.find((o) => o.op === 'upsert');
       expect(closeEvent).toBeDefined();
 
       // Audit check

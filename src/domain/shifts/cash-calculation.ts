@@ -1,4 +1,5 @@
-import type { Minor, Sale, Shift, CashMovement } from '../types';
+import type { Minor } from '../money';
+import type { Sale, Shift, CashMovement } from '../types';
 
 export interface CalculateExpectedCashParams {
   openingFloat: Minor;

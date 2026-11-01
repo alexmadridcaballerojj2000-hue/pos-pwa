@@ -1,4 +1,3 @@
-import React from 'react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -90,7 +89,6 @@ describe('AuditView (SPEC §6.8 & S7-T6)', () => {
 
     useAuthStore.setState({
       currentUser: mockOwner,
-      isAuthenticated: true,
     });
   });
 

@@ -1,4 +1,3 @@
-import React from 'react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -17,7 +16,7 @@ vi.mock('@/hardware', () => ({
   DEFAULT_PRINTER_CONFIG: {
     driver: 'browser',
     paperWidthMm: 80,
-    codePage: 'cp858',
+    codePage: 'CP858',
     autoCut: true,
     openDrawer: false,
     drawerPin: 2,
@@ -32,7 +31,9 @@ describe('ShiftsView and Shift Management (S7-T2, S7-T3, S7-T4)', () => {
     name: 'Carlos Cajero',
     role: 'cashier',
     active: true,
-    pinHash: '1234',
+    pin: { hash: 'h', salt: 's', iterations: 210000 },
+    version: 1,
+    updatedAt: new Date().toISOString(),
   };
 
   beforeEach(async () => {
@@ -46,28 +47,37 @@ describe('ShiftsView and Shift Management (S7-T2, S7-T3, S7-T4)', () => {
 
     await db.users.add(mockCashier);
     await db.settings.add({
-      id: 'settings_main',
-      businessName: 'Don Pepe Abarrotes',
-      taxId: 'PEP990101XYZ',
-      address: 'Calle Mayor 123',
-      phone: '555-9876',
+      id: 'singleton',
+      business: {
+        name: 'Don Pepe Abarrotes',
+        taxId: 'PEP990101XYZ',
+        address: 'Calle Mayor 123',
+        phone: '555-9876',
+      },
       currency: { code: 'MXN', decimals: 2, symbol: '$' },
+      pricesIncludeTax: true,
       requireShift: true,
+      allowNegativeStock: true,
+      maxDiscountBp: 1000,
+      paymentMethods: [
+        { id: 'cash', kind: 'cash', label: 'Efectivo', active: true, requireReference: false },
+      ],
+      modules: {},
+      receipt: { paperWidthMm: 80, template: null },
       printer: {
         driver: 'browser',
         paperWidthMm: 80,
-        codePage: 'cp858',
+        codePage: 'CP858',
         autoCut: true,
         openDrawer: false,
         drawerPin: 2,
-        baudRate: 9600,
+        serialBaudRate: 9600,
       },
-      updatedAt: '2026-11-01T10:00:00.000Z',
+      mode: 'local',
     });
 
     useAuthStore.setState({
       currentUser: mockCashier,
-      isAuthenticated: true,
     });
   });
 
@@ -194,16 +204,21 @@ describe('ShiftsView and Shift Management (S7-T2, S7-T3, S7-T4)', () => {
         subtotal: 10000,
         lineDiscounts: 0,
         orderDiscount: 0,
-        totalDiscount: 0,
         tax: 0,
         total: 10000,
+        roundingAdjustment: 0,
         taxBreakdown: [],
       },
-      payments: [{ method: 'cash', amount: 10000 }],
+      payments: [
+        { id: v7(), createdAt: '2026-11-01T12:00:00.000Z', method: 'cash', amount: 10000 },
+      ],
       change: 0,
       pricesIncludeTax: true,
+      currency: 'MXN',
+      custom: {},
+      createdAt: '2026-11-01T12:00:00.000Z',
       completedAt: '2026-11-01T12:00:00.000Z',
-      receiptPrinted: false,
+      schemaVersion: 1,
     });
 
     render(<ShiftsView />);

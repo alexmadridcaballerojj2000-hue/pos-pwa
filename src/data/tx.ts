@@ -271,7 +271,7 @@ export class TxScope {
       eventId: v7(this.clock.now()),
       entity: 'shift',
       entityId: shift.id,
-      op: 'update',
+      op: 'upsert',
       payload: shift,
       schemaVersion: 1,
       occurredAt: nowIso,
