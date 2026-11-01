@@ -13,6 +13,7 @@ import type {
   TaxRate,
   User,
   UUID,
+  ISODate,
 } from '../types';
 
 export interface UserRepository {
@@ -74,10 +75,20 @@ export interface CustomFieldDefRepository {
   delete(id: UUID): Promise<void>;
 }
 
+export interface SaleFilter {
+  startDate?: ISODate;
+  endDate?: ISODate;
+  shiftId?: UUID;
+  cashierId?: UUID;
+  search?: string;
+  limit?: number;
+}
+
 export interface SaleRepository {
   getById(id: UUID): Promise<Sale | null>;
   getByNumber(saleNumber: string): Promise<Sale | null>;
   listByShift(shiftId: UUID): Promise<Sale[]>;
+  list(filter?: SaleFilter): Promise<Sale[]>;
   save(sale: Sale): Promise<void>;
 }
 

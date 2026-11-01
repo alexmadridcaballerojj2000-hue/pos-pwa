@@ -16,6 +16,7 @@ import type {
   Product,
   ProductRepository,
   Sale,
+  SaleFilter,
   SaleRepository,
   Settings,
   SettingsRepository,
@@ -244,6 +245,31 @@ export class DexieSaleRepository implements SaleRepository {
 
   async listByShift(shiftId: UUID): Promise<Sale[]> {
     return this.db.sales.where('shiftId').equals(shiftId).toArray();
+  }
+
+  async list(filter?: SaleFilter): Promise<Sale[]> {
+    let sales = await this.db.sales.orderBy('completedAt').reverse().toArray();
+
+    if (filter?.startDate) {
+      sales = sales.filter((s) => s.completedAt >= filter.startDate!);
+    }
+    if (filter?.endDate) {
+      sales = sales.filter((s) => s.completedAt <= filter.endDate!);
+    }
+    if (filter?.shiftId) {
+      sales = sales.filter((s) => s.shiftId === filter.shiftId);
+    }
+    if (filter?.cashierId) {
+      sales = sales.filter((s) => s.cashierId === filter.cashierId);
+    }
+    if (filter?.search) {
+      const q = filter.search.toLowerCase().trim();
+      sales = sales.filter((s) => s.number.toLowerCase().includes(q));
+    }
+    if (filter?.limit && filter.limit > 0) {
+      sales = sales.slice(0, filter.limit);
+    }
+    return sales;
   }
 
   async save(sale: Sale): Promise<void> {

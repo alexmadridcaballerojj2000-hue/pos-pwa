@@ -3,7 +3,7 @@ import type { SaleLine, SaleTotals } from './calculator';
 import type { Payment, PaymentMethodConfig } from './payments';
 import type { Discount } from './discount';
 
-export type { UUID };
+export type { UUID, ISODate };
 export type SaleOrderDiscount = Discount;
 
 export interface Versioned {

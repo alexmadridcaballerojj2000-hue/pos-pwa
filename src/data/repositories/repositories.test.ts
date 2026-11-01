@@ -225,6 +225,16 @@ describe('Dexie Repositories (domain port implementations)', () => {
       const shiftSales = await repos.sales.listByShift(shiftId);
       expect(shiftSales).toHaveLength(1);
       expect(shiftSales[0]?.id).toBe(sale.id);
+
+      // Test list with filters
+      const allSales = await repos.sales.list();
+      expect(allSales).toHaveLength(1);
+
+      const filteredByNumber = await repos.sales.list({ search: '000042' });
+      expect(filteredByNumber).toHaveLength(1);
+
+      const noMatch = await repos.sales.list({ search: 'NONEXISTENT' });
+      expect(noMatch).toHaveLength(0);
     });
   });
 

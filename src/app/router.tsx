@@ -1,6 +1,7 @@
 import { createBrowserRouter } from 'react-router-dom';
 import { Layout } from '@/ui/layout';
 import { PosView } from '@/features/pos/pos-view';
+import { SalesHistoryView } from '@/features/sales/sales-history-view';
 import { CatalogView } from '@/features/catalog/catalog-view';
 import { ShiftsView } from '@/features/shifts/shifts-view';
 import { InventoryView } from '@/features/inventory/inventory-view';
@@ -16,6 +17,10 @@ export const router = createBrowserRouter([
       {
         index: true,
         element: <PosView />,
+      },
+      {
+        path: 'sales',
+        element: <SalesHistoryView />,
       },
       {
         path: 'catalog',
