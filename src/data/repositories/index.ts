@@ -1,6 +1,9 @@
 import type {
   AuditEntry,
+  AuditFilter,
   AuditRepository,
+  CashMovement,
+  CashMovementRepository,
   Category,
   CategoryRepository,
   CustomFieldDef,
@@ -290,12 +293,36 @@ export class DexieShiftRepository implements ShiftRepository {
     return shift ?? null;
   }
 
+  async list(filter?: { limit?: number; status?: 'open' | 'closed' }): Promise<Shift[]> {
+    let collection = this.db.shifts.orderBy('openedAt').reverse();
+    if (filter?.status) {
+      collection = this.db.shifts.where('status').equals(filter.status).reverse();
+    }
+    const shifts = await collection.toArray();
+    if (filter?.limit && filter.limit > 0) {
+      return shifts.slice(0, filter.limit);
+    }
+    return shifts;
+  }
+
   async open(shift: Shift): Promise<void> {
     await this.db.shifts.add(shift);
   }
 
   async close(shift: Shift): Promise<void> {
     await this.db.shifts.put(shift);
+  }
+}
+
+export class DexieCashMovementRepository implements CashMovementRepository {
+  constructor(private readonly db: AppDatabase = defaultDb) {}
+
+  async add(movement: CashMovement): Promise<void> {
+    await this.db.cashMovements.add(movement);
+  }
+
+  async listByShift(shiftId: UUID): Promise<CashMovement[]> {
+    return this.db.cashMovements.where('shiftId').equals(shiftId).toArray();
   }
 }
 
@@ -332,6 +359,30 @@ export class DexieAuditRepository implements AuditRepository {
 
   async listRecent(limit = 50): Promise<AuditEntry[]> {
     return this.db.auditLog.orderBy('ts').reverse().limit(limit).toArray();
+  }
+
+  async list(filter?: AuditFilter): Promise<AuditEntry[]> {
+    let entries = await this.db.auditLog.orderBy('ts').reverse().toArray();
+    if (filter?.startDate) {
+      entries = entries.filter((e) => e.ts >= filter.startDate!);
+    }
+    if (filter?.endDate) {
+      entries = entries.filter((e) => e.ts <= filter.endDate!);
+    }
+    if (filter?.userId) {
+      entries = entries.filter((e) => e.userId === filter.userId);
+    }
+    if (filter?.action) {
+      const q = filter.action.toLowerCase();
+      entries = entries.filter((e) => e.action.toLowerCase().includes(q));
+    }
+    if (filter?.entity) {
+      entries = entries.filter((e) => e.entity === filter.entity);
+    }
+    if (filter?.limit && filter.limit > 0) {
+      entries = entries.slice(0, filter.limit);
+    }
+    return entries;
   }
 }
 
@@ -383,6 +434,7 @@ export interface Repositories {
   customFieldDefs: CustomFieldDefRepository;
   sales: SaleRepository;
   shifts: ShiftRepository;
+  cashMovements: CashMovementRepository;
   outbox: OutboxRepository;
   audit: AuditRepository;
   meta: MetaRepository;
@@ -400,6 +452,7 @@ export function createRepositories(db: AppDatabase = defaultDb): Repositories {
     customFieldDefs: new DexieCustomFieldDefRepository(db),
     sales: new DexieSaleRepository(db),
     shifts: new DexieShiftRepository(db),
+    cashMovements: new DexieCashMovementRepository(db),
     outbox: new DexieOutboxRepository(db),
     audit: new DexieAuditRepository(db),
     meta: new DexieMetaRepository(db),

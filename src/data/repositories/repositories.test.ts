@@ -10,6 +10,7 @@ import type {
   Sale,
   Settings,
   Shift,
+  CashMovement,
   TaxRate,
   User,
 } from '@/domain';
@@ -268,6 +269,43 @@ describe('Dexie Repositories (domain port implementations)', () => {
       expect(afterClose).toBeNull();
       const byId = await repos.shifts.getById(shift.id);
       expect(byId?.status).toBe('closed');
+
+      const allShifts = await repos.shifts.list();
+      expect(allShifts).toHaveLength(1);
+      const closedShifts = await repos.shifts.list({ status: 'closed' });
+      expect(closedShifts).toHaveLength(1);
+    });
+  });
+
+  describe('CashMovementRepository', () => {
+    it('adds and lists cash movements by shift', async () => {
+      const shiftId = '018f0000-0000-7000-8000-000000000060';
+      const mov1: CashMovement = {
+        id: '018f0000-0000-7000-8000-000000000061',
+        shiftId,
+        type: 'in',
+        amount: 25000,
+        reason: 'Aporte de caja chica',
+        createdBy: 'user-1',
+        createdAt: '2026-11-01T08:00:00.000Z',
+      };
+      const mov2: CashMovement = {
+        id: '018f0000-0000-7000-8000-000000000062',
+        shiftId,
+        type: 'out',
+        amount: 10000,
+        reason: 'Pago de mensajería',
+        createdBy: 'user-1',
+        createdAt: '2026-11-01T09:00:00.000Z',
+      };
+
+      await repos.cashMovements.add(mov1);
+      await repos.cashMovements.add(mov2);
+
+      const movements = await repos.cashMovements.listByShift(shiftId);
+      expect(movements).toHaveLength(2);
+      expect(movements.find((m) => m.id === mov1.id)?.amount).toBe(25000);
+      expect(movements.find((m) => m.id === mov2.id)?.type).toBe('out');
     });
   });
 
@@ -326,6 +364,10 @@ describe('Dexie Repositories (domain port implementations)', () => {
       expect(recent).toHaveLength(2);
       expect(recent[0]?.id).toBe(entry2.id); // newer first
       expect(recent[1]?.id).toBe(entry1.id);
+
+      const loginOnly = await repos.audit.list({ action: 'login' });
+      expect(loginOnly).toHaveLength(1);
+      expect(loginOnly[0]?.action).toBe('login');
     });
 
     it('stores and retrieves arbitrary typed values in meta', async () => {

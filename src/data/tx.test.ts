@@ -163,7 +163,7 @@ describe('withTx (Atomic Business Transactions)', () => {
     expect(outbox?.entity).toBe('cash_movement');
 
     const audit = await db.auditLog.toCollection().first();
-    expect(audit?.action).toBe('cash:in');
+    expect(audit?.action).toBe('cash_movement:in');
   });
 
   it('records custom mutation with outbox and audit log atomically', async () => {

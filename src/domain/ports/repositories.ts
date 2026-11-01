@@ -10,6 +10,7 @@ import type {
   Sale,
   Settings,
   Shift,
+  CashMovement,
   TaxRate,
   User,
   UUID,
@@ -95,8 +96,14 @@ export interface SaleRepository {
 export interface ShiftRepository {
   getCurrentOpen(): Promise<Shift | null>;
   getById(id: UUID): Promise<Shift | null>;
+  list(filter?: { limit?: number; status?: 'open' | 'closed' }): Promise<Shift[]>;
   open(shift: Shift): Promise<void>;
   close(shift: Shift): Promise<void>;
+}
+
+export interface CashMovementRepository {
+  add(movement: CashMovement): Promise<void>;
+  listByShift(shiftId: UUID): Promise<CashMovement[]>;
 }
 
 export interface OutboxRepository {
@@ -106,9 +113,19 @@ export interface OutboxRepository {
   markStatus(seq: number, status: OutboxStatus, error?: string): Promise<void>;
 }
 
+export interface AuditFilter {
+  startDate?: ISODate;
+  endDate?: ISODate;
+  userId?: UUID;
+  action?: string;
+  entity?: string;
+  limit?: number;
+}
+
 export interface AuditRepository {
   log(entry: AuditEntry): Promise<void>;
   listRecent(limit?: number): Promise<AuditEntry[]>;
+  list(filter?: AuditFilter): Promise<AuditEntry[]>;
 }
 
 export interface HeldCartRepository {

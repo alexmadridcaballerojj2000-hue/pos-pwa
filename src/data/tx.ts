@@ -8,6 +8,7 @@ import {
   type Sale,
   type SaleReturn,
   type SaleVoid,
+  type Shift,
   SystemClock,
   type UUID,
   v7,
@@ -49,6 +50,16 @@ export interface RecordInventoryMovementParams {
 
 export interface RecordCashMovementParams {
   movement: CashMovement;
+  auditDetails?: Record<string, unknown>;
+}
+
+export interface RecordShiftOpenParams {
+  shift: Shift;
+  auditDetails?: Record<string, unknown>;
+}
+
+export interface RecordShiftCloseParams {
+  shift: Shift;
   auditDetails?: Record<string, unknown>;
 }
 
@@ -201,13 +212,88 @@ export class TxScope {
       id: v7(this.clock.now()),
       ts: nowIso,
       userId: this.context.userId,
-      action: `cash:${movement.type}`,
+      action: `cash_movement:${movement.type}`,
       entity: 'cashMovement',
       entityId: movement.id,
       details: {
         shiftId: movement.shiftId,
         amount: movement.amount,
         reason: movement.reason,
+        ...auditDetails,
+      },
+    };
+    await this.db.auditLog.add(auditEntry);
+  }
+
+  async recordShiftOpen(params: RecordShiftOpenParams): Promise<void> {
+    const { shift, auditDetails } = params;
+    const nowIso = this.clock.now().toISOString();
+
+    await this.db.shifts.add(shift);
+
+    const outboxItem: OutboxItem = {
+      eventId: v7(this.clock.now()),
+      entity: 'shift',
+      entityId: shift.id,
+      op: 'create',
+      payload: shift,
+      schemaVersion: 1,
+      occurredAt: nowIso,
+      status: 'pending',
+      attempts: 0,
+      nextAttemptAt: 0,
+    };
+    await this.db.outbox.add(outboxItem);
+
+    const auditEntry: AuditEntry = {
+      id: v7(this.clock.now()),
+      ts: nowIso,
+      userId: this.context.userId,
+      action: 'shift:opened',
+      entity: 'shift',
+      entityId: shift.id,
+      details: {
+        openingFloat: shift.openingFloat,
+        openedAt: shift.openedAt,
+        ...auditDetails,
+      },
+    };
+    await this.db.auditLog.add(auditEntry);
+  }
+
+  async recordShiftClose(params: RecordShiftCloseParams): Promise<void> {
+    const { shift, auditDetails } = params;
+    const nowIso = this.clock.now().toISOString();
+
+    await this.db.shifts.put(shift);
+
+    const outboxItem: OutboxItem = {
+      eventId: v7(this.clock.now()),
+      entity: 'shift',
+      entityId: shift.id,
+      op: 'update',
+      payload: shift,
+      schemaVersion: 1,
+      occurredAt: nowIso,
+      status: 'pending',
+      attempts: 0,
+      nextAttemptAt: 0,
+    };
+    await this.db.outbox.add(outboxItem);
+
+    const auditEntry: AuditEntry = {
+      id: v7(this.clock.now()),
+      ts: nowIso,
+      userId: this.context.userId,
+      action: 'shift:closed',
+      entity: 'shift',
+      entityId: shift.id,
+      details: {
+        openingFloat: shift.openingFloat,
+        countedCash: shift.countedCash,
+        expectedCash: shift.expectedCash,
+        difference: shift.difference,
+        closedAt: shift.closedAt,
         ...auditDetails,
       },
     };
