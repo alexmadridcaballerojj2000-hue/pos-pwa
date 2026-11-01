@@ -91,7 +91,20 @@ export interface Settings {
     paperWidthMm: 58 | 80;
     template: unknown;
   };
+  printer?: PrinterConfig;
   mode: 'local' | 'synced';
+}
+
+export interface PrinterConfig {
+  driver: 'browser' | 'usb' | 'serial';
+  paperWidthMm: 58 | 80;
+  codePage: 'CP858' | 'CP1252' | 'CP437';
+  autoCut: boolean;
+  openDrawer: boolean;
+  drawerPin: 2 | 5;
+  usbVendorId?: number;
+  usbProductId?: number;
+  serialBaudRate?: number;
 }
 
 export interface CustomFieldDef extends Versioned {
