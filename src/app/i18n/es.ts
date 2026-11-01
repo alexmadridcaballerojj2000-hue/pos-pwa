@@ -222,6 +222,16 @@ export const es = {
     saleDetail: 'Detalle de Venta',
     reprintSuccess: 'Recibo enviado a reimpresión.',
   },
+  receipt: {
+    title: 'Comprobante de Venta',
+    saleSuccess: '¡Venta completada con éxito!',
+    print: 'Imprimir Recibo',
+    printing: 'Imprimiendo...',
+    newSale: 'Nueva Venta',
+    width58: '58 mm',
+    width80: '80 mm',
+    preview: 'Vista previa del recibo',
+  },
   diagnostics: {
     title: 'Diagnóstico del Sistema',
     subtitle: 'Estado local del dispositivo, almacenamiento y sincronización.',

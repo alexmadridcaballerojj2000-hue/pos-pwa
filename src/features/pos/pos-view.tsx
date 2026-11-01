@@ -33,6 +33,7 @@ import { DiscountDialog } from './discount-dialog';
 import { CustomerSelectorDialog } from './customer-selector-dialog';
 import { HeldCartsDialog, HoldCartDialog } from './held-carts-dialog';
 import { CheckoutDialog } from './checkout-dialog';
+import { ReceiptModal } from './receipt-modal';
 import { completeSale } from './complete-sale';
 import { useBarcodeScanner } from './use-barcode-scanner';
 
@@ -112,9 +113,20 @@ export const PosView: React.FC<PosViewProps> = ({
   const [isHoldCartDialogOpen, setIsHoldCartDialogOpen] = useState(false);
   const [isHeldCartsDialogOpen, setIsHeldCartsDialogOpen] = useState(false);
   const [isCheckoutDialogOpen, setIsCheckoutDialogOpen] = useState(false);
-  const [_completedSale, setCompletedSale] = useState<Sale | null>(null);
+  const [completedSale, setCompletedSale] = useState<Sale | null>(null);
+  const [completedSaleCustomerName, setCompletedSaleCustomerName] = useState<string | undefined>(
+    undefined,
+  );
   const [customersMap, setCustomersMap] = useState<Record<UUID, string>>({});
   const isDraftRestoredRef = useRef(false);
+
+  const paymentMethodLabels = useMemo(() => {
+    const map: Record<string, string> = {};
+    settings?.paymentMethods?.forEach((pm) => {
+      map[pm.id] = pm.label;
+    });
+    return map;
+  }, [settings?.paymentMethods]);
 
   const loadHeldCarts = useCallback(async () => {
     try {
@@ -662,6 +674,33 @@ export const PosView: React.FC<PosViewProps> = ({
             setIsCheckoutDialogOpen(false);
             dispatchCart({ type: 'CLEAR_CART' });
             setCompletedSale(sale);
+            setCompletedSaleCustomerName(selectedCustomer?.name);
+          }}
+        />
+      )}
+
+      {/* Receipt Modal */}
+      {completedSale && (
+        <ReceiptModal
+          isOpen={Boolean(completedSale)}
+          onClose={() => {
+            setCompletedSale(null);
+            setCompletedSaleCustomerName(undefined);
+          }}
+          sale={completedSale}
+          business={
+            settings?.business ?? {
+              name: 'Mi Negocio',
+            }
+          }
+          currency={currency}
+          cashierName={activeUser?.name}
+          customerName={completedSaleCustomerName}
+          paymentMethodLabels={paymentMethodLabels}
+          initialPaperWidthMm={settings?.receipt?.paperWidthMm ?? 80}
+          onNewSale={() => {
+            setCompletedSale(null);
+            setCompletedSaleCustomerName(undefined);
           }}
         />
       )}
