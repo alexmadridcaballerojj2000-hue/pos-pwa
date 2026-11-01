@@ -78,6 +78,7 @@ export interface BuildReceiptDocParams {
   paymentMethodLabels?: Record<string, string>;
   paperWidthMm?: 58 | 80;
   openDrawer?: boolean;
+  isReprint?: boolean;
 }
 
 /**
@@ -94,6 +95,7 @@ export function buildReceiptDoc(params: BuildReceiptDocParams): ReceiptDoc {
     paymentMethodLabels = {},
     paperWidthMm = 80,
     openDrawer = false,
+    isReprint = false,
   } = params;
 
   const blocks: ReceiptBlock[] = [];
@@ -111,6 +113,16 @@ export function buildReceiptDoc(params: BuildReceiptDocParams): ReceiptDoc {
     bold: true,
     size: 'large',
   });
+
+  if (isReprint) {
+    blocks.push({
+      type: 'text',
+      text: '*** COPIA / REIMPRESIÓN ***',
+      align: 'center',
+      bold: true,
+      size: 'small',
+    });
+  }
 
   if (business.taxId) {
     blocks.push({

@@ -417,6 +417,7 @@ export const SalesHistoryView: React.FC<SalesHistoryViewProps> = ({
           }
           paymentMethodLabels={paymentMethodLabels}
           initialPaperWidthMm={settings?.receipt?.paperWidthMm ?? 80}
+          isReprint={true}
           onNewSale={() => setReprintingSale(null)}
         />
       )}

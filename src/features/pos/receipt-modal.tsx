@@ -1,7 +1,8 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { Printer, X, CheckCircle2, PlusCircle } from 'lucide-react';
+import { Printer, X, CheckCircle2, PlusCircle, RefreshCw } from 'lucide-react';
 import type { CurrencyConfig, Sale } from '@/domain';
-import { buildReceiptDoc, renderReceiptToHtml } from '@/domain';
+import { buildReceiptDoc } from '@/domain';
+import { printerService } from '@/hardware';
 import { useI18n } from '@/app/i18n';
 
 export interface ReceiptModalProps {
@@ -20,6 +21,7 @@ export interface ReceiptModalProps {
   customerName?: string;
   paymentMethodLabels?: Record<string, string>;
   initialPaperWidthMm?: 58 | 80;
+  isReprint?: boolean;
   onNewSale?: () => void;
 }
 
@@ -33,6 +35,7 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
   customerName,
   paymentMethodLabels = {},
   initialPaperWidthMm = 80,
+  isReprint = false,
   onNewSale,
 }) => {
   const { t } = useI18n();
@@ -50,42 +53,28 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
       paymentMethodLabels,
       paperWidthMm,
       openDrawer: false,
+      isReprint,
     });
-  }, [sale, business, currency, cashierName, customerName, paymentMethodLabels, paperWidthMm]);
+  }, [
+    sale,
+    business,
+    currency,
+    cashierName,
+    customerName,
+    paymentMethodLabels,
+    paperWidthMm,
+    isReprint,
+  ]);
 
-  // Handle printing via hidden isolated iframe
-  const handlePrint = useCallback(() => {
+  // Handle printing via printerService
+  const handlePrint = useCallback(async () => {
     try {
       setIsPrinting(true);
-      const html = renderReceiptToHtml(receiptDoc);
-      const iframe = document.createElement('iframe');
-      iframe.style.position = 'fixed';
-      iframe.style.right = '0';
-      iframe.style.bottom = '0';
-      iframe.style.width = '0';
-      iframe.style.height = '0';
-      iframe.style.border = '0';
-      document.body.appendChild(iframe);
-
-      iframe.srcdoc = html;
-      iframe.onload = () => {
-        try {
-          iframe.contentWindow?.focus();
-          iframe.contentWindow?.print();
-        } catch (err) {
-          console.error('Error invoking print dialog:', err);
-        } finally {
-          setIsPrinting(false);
-          setTimeout(() => {
-            if (document.body.contains(iframe)) {
-              document.body.removeChild(iframe);
-            }
-          }, 1500);
-        }
-      };
+      await printerService.print(receiptDoc);
     } catch (err) {
+      console.error('Failed to print receipt:', err);
+    } finally {
       setIsPrinting(false);
-      console.error('Failed to prepare print iframe:', err);
     }
   }, [receiptDoc]);
 
@@ -127,15 +116,21 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
         {/* Header */}
         <div className="px-5 py-3.5 border-b border-border flex items-center justify-between shrink-0 bg-muted/20">
           <div className="flex items-center gap-2.5">
-            <div className="h-9 w-9 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 flex items-center justify-center shrink-0">
-              <CheckCircle2 className="h-5 w-5" />
+            <div
+              className={`h-9 w-9 rounded-full flex items-center justify-center shrink-0 ${
+                isReprint
+                  ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-600'
+                  : 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600'
+              }`}
+            >
+              {isReprint ? <RefreshCw className="h-5 w-5" /> : <CheckCircle2 className="h-5 w-5" />}
             </div>
             <div>
               <h2
                 id="receipt-modal-title"
                 className="font-bold text-base text-foreground leading-tight"
               >
-                {t('receipt.saleSuccess')}
+                {isReprint ? 'Reimpresión de Recibo' : t('receipt.saleSuccess')}
               </h2>
               <p className="text-xs text-muted-foreground font-mono">Folio: {sale.number}</p>
             </div>
@@ -284,8 +279,8 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
             }}
             className="min-h-[48px] px-6 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-bold flex items-center gap-2 transition-all shadow-md active:scale-98"
           >
-            <PlusCircle className="h-4 w-4" />
-            <span>{t('receipt.newSale')}</span>
+            {isReprint ? <X className="h-4 w-4" /> : <PlusCircle className="h-4 w-4" />}
+            <span>{isReprint ? t('common.close') : t('receipt.newSale')}</span>
           </button>
         </div>
       </div>

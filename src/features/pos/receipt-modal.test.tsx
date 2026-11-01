@@ -198,4 +198,12 @@ describe('ReceiptModal', () => {
 
     appendChildSpy.mockRestore();
   });
+
+  it('renders reprint watermark and header when isReprint is true', () => {
+    render(<ReceiptModal {...defaultProps} isReprint={true} />);
+
+    expect(screen.getByText('Reimpresión de Recibo')).toBeInTheDocument();
+    expect(screen.getByText('*** COPIA / REIMPRESIÓN ***')).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: /Cerrar/i }).length).toBeGreaterThanOrEqual(2);
+  });
 });
